@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three/three.module.js';
 import { clamp, wrap, damp, renderScale, seededRandom } from './world-math.js';
-import { createTraffic } from './world-traffic.js?v=continuous4';
+import { createTraffic } from './world-traffic.js?v=formation6';
 
 // The canvas is decorative. Every project and control remains ordinary HTML.
 const canvas = document.getElementById('world-canvas');

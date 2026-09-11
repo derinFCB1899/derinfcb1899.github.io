@@ -1,25 +1,32 @@
-import { createRetroCar, createLightCycle, createRecognizer } from './vehicle-models.js?v=continuous4';
+import { createRetroCar, createLightCycle, createRecognizer } from './vehicle-models.js?v=formation6';
 
-// Vehicle paths and light walls live in the same 3D coordinates as the road.
+// Both themes share one fixed formation on the road's grid axes.
+const formation = [
+  {x:0, z:10 / 3},
+  {x:10 / 3, z:-20 / 3},
+  {x:-10 / 3, z:-20 / 3},
+];
+const cycleColors = ['#51eaff', '#ff962e', '#ffffff'];
+
 export function createTraffic(THREE, scene) {
   const sunset = new THREE.Group();
   sunset.name = 'sunset-traffic';
   const arena = new THREE.Group();
   arena.name = 'tron-arena';
-  const cars = [createRetroCar(THREE, '#fa258e', 'wedge'), createRetroCar(THREE, '#46a8e0', 'boxy'), createRetroCar(THREE, '#ffb548', 'targa')];
+  const cars = [
+    createRetroCar(THREE, '#fa258e', 'countach'),
+    createRetroCar(THREE, '#ff744b', 'testarossa'),
+    createRetroCar(THREE, '#66d9ff', '959'),
+  ];
   cars.forEach(car => {
     car.scale.setScalar(.72);
-    const materials = new Set();
-    car.traverse(object => { if (object.material) materials.add(object.material); });
-    car.userData.fadeMaterials = [...materials].map(material => ({material, opacity:material.opacity, depthWrite:material.depthWrite}));
-    car.userData.fadeMaterials.forEach(({material}) => { material.transparent = true; material.needsUpdate = true; });
     sunset.add(car);
   });
   const smoothstep = (low, high, value) => {
     const t = Math.max(0, Math.min(1, (value - low) / (high - low)));
     return t * t * (3 - 2 * t);
   };
-  const cycles = [createLightCycle(THREE, '#51eaff'), createLightCycle(THREE, '#ff962e')];
+  const cycles = cycleColors.map(color => createLightCycle(THREE, color));
   cycles.forEach(cycle => arena.add(cycle));
   const recognizers = [createRecognizer(THREE), createRecognizer(THREE)];
   recognizers.forEach(model => arena.add(model));
@@ -68,7 +75,7 @@ export function createTraffic(THREE, scene) {
     arena.add(wall, edge);
     return {wall, edge};
   }
-  const trails = [trail('#38deff'), trail('#ff8c29')];
+  const trails = cycleColors.map(trail);
   function setTheme(light) {
     sunset.visible = light;
     arena.visible = !light;
@@ -81,24 +88,15 @@ export function createTraffic(THREE, scene) {
   function update(time, compact) {
     if (sunset.visible) {
       cars.forEach((car, i) => {
-        const phase = (time / 32 + i / 3 + .09) % 1;
-        const opacity = smoothstep(0, .07, phase) * (1 - smoothstep(.64, .94, phase));
-        car.visible = opacity > .001;
-        car.userData.fadeMaterials.forEach(({material, opacity:baseOpacity, depthWrite}) => {
-          material.opacity = baseOpacity * opacity;
-          material.depthWrite = depthWrite && opacity > .985;
-        });
-        const lanes = [0, 10 / 3, -10 / 3];
-        car.position.set(lanes[i], -5, 10 / 3 - phase * phase * phase * 110);
-        car.rotation.y = Math.sin(time * .18 + i) * .008;
-        car.rotation.z = Math.sin(time * 1.2 + i) * .003;
+        const {x, z} = formation[i];
+        car.position.set(x, -5, z);
+        car.rotation.y = 0;
         car.userData.wheels?.forEach(wheel => { wheel.rotation.x = -time * 7; });
       });
     }
     if (arena.visible) {
       cycles.forEach((cycle, i) => {
-        const x = i === 0 ? 0 : 10 / 3;
-        const z = i === 0 ? 10 / 3 : -20 / 3;
+        const {x, z} = formation[i];
         cycle.position.set(x, -5, z);
         cycle.rotation.y = 0;
         cycle.rotation.z = Math.sin(time * .72 + i * 1.8) * .04;
