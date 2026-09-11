@@ -1,13 +1,13 @@
 import * as THREE from './vendor/three/three.module.js';
 import { clamp, wrap, damp, renderScale, seededRandom } from './world-math.js';
-import { createTraffic } from './world-traffic.js';
+import { createTraffic } from './world-traffic.js?v=continuous4';
 
 // The canvas is decorative. Every project and control remains ordinary HTML.
 const canvas = document.getElementById('world-canvas');
 const root = document.documentElement;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
-const hint = document.querySelector('.world-hint');
+let hint = document.querySelector('.world-hint');
 let renderer;
 
 try {
@@ -86,12 +86,20 @@ function startWorld(renderer) {
   const rails = new THREE.Group();
   const railGeometry = new THREE.BoxGeometry(.025, .025, 220);
   const railMaterial = lightMaterial('#52dfff', .6);
-  for (const x of [-8,-4,4,8]) {
+  for (const x of [-5,5]) {
     const rail = new THREE.Mesh(railGeometry,railMaterial);
     rail.position.set(x,-5,-105);
     rails.add(rail);
   }
   scene.add(rails);
+  const roadDashes = new THREE.InstancedMesh(new THREE.BoxGeometry(.045, .02, 3.8), railMaterial, 56);
+  const roadMatrix = new THREE.Matrix4();
+  for (let i = 0; i < 56; i++) {
+    roadMatrix.makeTranslation(i % 2 ? 5 / 3 : -5 / 3, -5, 16 - Math.floor(i / 2) * 8);
+    roadDashes.setMatrixAt(i, roadMatrix);
+  }
+  roadDashes.instanceMatrix.needsUpdate = true;
+  scene.add(roadDashes);
   const traffic = createTraffic(THREE, scene);
 
   function setTheme() {
@@ -112,6 +120,7 @@ function startWorld(renderer) {
     stars.material.needsUpdate = true;
     packets.material.color.copy(cyan);
     railMaterial.color.set(light ? '#faac48' : '#50eaff');
+    rails.visible = roadDashes.visible = light;
     setChapter();
     accent.copy(nextAccent);
     if (!shouldRun() && !document.hidden) renderStill();
@@ -154,27 +163,30 @@ function startWorld(renderer) {
     chapter = damp(chapter, chapterTarget, 1.7, dt);
     travel += dt * 3.2;
     const distance = travel + scrollPosition * .018;
-    const targetX = pointer.x * (compact ? .3 : 1.5) + Math.sin(elapsed * .13) * .24;
-    const targetY = .75 + pointer.y * .65 + Math.sin(elapsed * .19) * .12;
+    const targetX = pointer.x * (compact ? .15 : .6);
+    const targetY = .75 + pointer.y * .25;
     camera.position.x = damp(camera.position.x, targetX, 3, dt);
     camera.position.y = damp(camera.position.y, targetY, 3, dt);
-    camera.position.z = 24 + (motionAllowed() ? 7 * Math.exp(-elapsed * 1.45) : 0);
-    lookAt.set(pointer.x * .45, -.7 + pointer.y * .3, -70);
+    camera.position.z = 24;
+    lookAt.set(pointer.x * .2, -.7 + pointer.y * .12, -70);
     camera.lookAt(lookAt);
-    camera.rotation.z = pointer.x * -.016;
+    camera.rotation.z = pointer.x * -.005;
     accent.lerp(nextAccent, 1 - Math.exp(-dt * 1.5));
 
-    floor.position.z = -115 + wrap(distance, 300 / 90);
+    const light = root.dataset.theme === 'light';
+    floor.position.z = (light ? -115 : -110) + wrap(distance, 10 / 3);
+    floor.position.x = 0;
+    roadDashes.position.z = wrap(distance, 8);
     stars.rotation.z = Math.sin(elapsed * .045) * .02;
     stars.position.z = wrap(elapsed * .25, 10);
     for (let i = 0; i < packetCount; i++) {
       const offset = i * 6;
-      const lane = [-12, -8, -4, 4, 8, 12][i % 6];
-      const z = 28 - wrap(i * 13.7 - elapsed * (page === 'work' ? 22 : 8) - scrollPosition * .025, 220);
+      const lane = [-4,-3,-2,1,2,3][i % 6] * 10 / 3;
+      const position = 28 - wrap(i * 13.7 - elapsed * 10 - scrollPosition * .025, 220);
       packetPositions[offset] = packetPositions[offset + 3] = lane;
       packetPositions[offset + 1] = packetPositions[offset + 4] = -4.95;
-      packetPositions[offset + 2] = z;
-      packetPositions[offset + 5] = z - (page === 'work' ? 5 : 1.8);
+      packetPositions[offset + 2] = position;
+      packetPositions[offset + 5] = position - 2.5;
     }
     packetGeometry.attributes.position.needsUpdate = true;
     traffic.update(elapsed, compact);
@@ -189,7 +201,7 @@ function startWorld(renderer) {
   }
   function frame(now) {
     if (!shouldRun()) return;
-    const interval = compact ? 1000 / 30 : 1000 / 60;
+    const interval = 1000 / 60;
     const sincePaint = now - lastPaint;
     if (sincePaint + .001 < interval) return;
     const dt = lastTime ? Math.min((now - lastTime) / 1000, .05) : 0;
@@ -272,6 +284,7 @@ function startWorld(renderer) {
   window.addEventListener('resize', size, { passive: true });
   window.addEventListener('adc:motionchange', onMotion);
   window.addEventListener('adc:chapterchange', setChapter);
+  window.addEventListener('adc:pagechange', () => { hint = document.querySelector('.world-hint'); setChapter(); onScroll(); sync(); });
   window.addEventListener('adc:themechange', setTheme);
   document.addEventListener('visibilitychange', sync);
   reduced.addEventListener('change', onMotion);

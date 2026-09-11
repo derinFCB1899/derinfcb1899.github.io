@@ -1,4 +1,4 @@
-import { createRetroCar, createLightCycle, createRecognizer } from './vehicle-models.js';
+import { createRetroCar, createLightCycle, createRecognizer } from './vehicle-models.js?v=continuous4';
 
 // Vehicle paths and light walls live in the same 3D coordinates as the road.
 export function createTraffic(THREE, scene) {
@@ -6,8 +6,19 @@ export function createTraffic(THREE, scene) {
   sunset.name = 'sunset-traffic';
   const arena = new THREE.Group();
   arena.name = 'tron-arena';
-  const cars = [createRetroCar(THREE, '#fa258e'), createRetroCar(THREE, '#6d38e0')];
-  cars.forEach(car => { car.scale.setScalar(1.35); sunset.add(car); });
+  const cars = [createRetroCar(THREE, '#fa258e', 'wedge'), createRetroCar(THREE, '#46a8e0', 'boxy'), createRetroCar(THREE, '#ffb548', 'targa')];
+  cars.forEach(car => {
+    car.scale.setScalar(.72);
+    const materials = new Set();
+    car.traverse(object => { if (object.material) materials.add(object.material); });
+    car.userData.fadeMaterials = [...materials].map(material => ({material, opacity:material.opacity, depthWrite:material.depthWrite}));
+    car.userData.fadeMaterials.forEach(({material}) => { material.transparent = true; material.needsUpdate = true; });
+    sunset.add(car);
+  });
+  const smoothstep = (low, high, value) => {
+    const t = Math.max(0, Math.min(1, (value - low) / (high - low)));
+    return t * t * (3 - 2 * t);
+  };
   const cycles = [createLightCycle(THREE, '#51eaff'), createLightCycle(THREE, '#ff962e')];
   cycles.forEach(cycle => arena.add(cycle));
   const recognizers = [createRecognizer(THREE), createRecognizer(THREE)];
@@ -35,27 +46,29 @@ export function createTraffic(THREE, scene) {
       indices.push(n, n + 1, n + 2, n + 1, n + 3, n + 2);
     }
     geometry.setIndex(indices);
-    const wall = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.25, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending, toneMapped:false }));
+    const wall = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color:'#ffffff', vertexColors:true, transparent:true, opacity:.25, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending, toneMapped:false }));
     wall.frustumCulled = false;
     const edgeGeometry = new THREE.BufferGeometry();
     edgeGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(samples * 3), 3).setUsage(THREE.DynamicDrawUsage));
-    const edge = new THREE.Line(edgeGeometry, new THREE.LineBasicMaterial({ color, transparent:true, opacity:.95, blending:THREE.AdditiveBlending, depthWrite:false }));
+    const edge = new THREE.Line(edgeGeometry, new THREE.LineBasicMaterial({ color:'#ffffff', vertexColors:true, transparent:true, opacity:.95, blending:THREE.AdditiveBlending, depthWrite:false }));
     edge.frustumCulled = false;
+    const tint = new THREE.Color(color);
+    const wallColors = new Float32Array(samples * 6);
+    const edgeColors = new Float32Array(samples * 3);
+    for (let j = 0; j < samples; j++) {
+      const fade = 1 - smoothstep(.3, 1, j / (samples - 1));
+      for (let component = 0; component < 3; component++) {
+        const value = [tint.r, tint.g, tint.b][component] * fade;
+        wallColors[j * 6 + component] = wallColors[j * 6 + 3 + component] = value;
+        edgeColors[j * 3 + component] = value;
+      }
+    }
+    geometry.setAttribute('color', new THREE.BufferAttribute(wallColors,3));
+    edgeGeometry.setAttribute('color', new THREE.BufferAttribute(edgeColors,3));
     arena.add(wall, edge);
     return {wall, edge};
   }
   const trails = [trail('#38deff'), trail('#ff8c29')];
-  const sparksGeometry = new THREE.BufferGeometry();
-  sparksGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(24 * 3), 3).setUsage(THREE.DynamicDrawUsage));
-  const sparks = new THREE.Points(sparksGeometry, new THREE.PointsMaterial({color:'#bff7ff',size:.14,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));
-  sparks.frustumCulled = false;
-  arena.add(sparks);
-
-  function cyclePose(phase, side) {
-    if (phase < .43) return { x:side * (16 - phase / .43 * 14.4), z:5, angle:side * Math.PI / 2 };
-    const turn = (phase - .43) / .57;
-    return { x:side * (1.6 + Math.sin(turn * Math.PI) * 5), z:5 - turn * 90, angle:side * Math.PI / 2 * Math.max(0, 1 - turn * 5) };
-  }
   function setTheme(light) {
     sunset.visible = light;
     arena.visible = !light;
@@ -68,44 +81,39 @@ export function createTraffic(THREE, scene) {
   function update(time, compact) {
     if (sunset.visible) {
       cars.forEach((car, i) => {
-        const phase = (time / 22 + i * .49 + .09) % 1;
-        car.position.set(i === 0 ? (compact ? .8 : 2.6) : -3.3, -5, 15 - phase * 105);
-        car.rotation.y = -.13 + Math.sin(time * .25 + i) * .035;
-        car.rotation.z = Math.sin(time * 1.8 + i) * .006;
+        const phase = (time / 32 + i / 3 + .09) % 1;
+        const opacity = smoothstep(0, .07, phase) * (1 - smoothstep(.64, .94, phase));
+        car.visible = opacity > .001;
+        car.userData.fadeMaterials.forEach(({material, opacity:baseOpacity, depthWrite}) => {
+          material.opacity = baseOpacity * opacity;
+          material.depthWrite = depthWrite && opacity > .985;
+        });
+        const lanes = [0, 10 / 3, -10 / 3];
+        car.position.set(lanes[i], -5, 10 / 3 - phase * phase * phase * 110);
+        car.rotation.y = Math.sin(time * .18 + i) * .008;
+        car.rotation.z = Math.sin(time * 1.2 + i) * .003;
         car.userData.wheels?.forEach(wheel => { wheel.rotation.x = -time * 7; });
       });
     }
     if (arena.visible) {
-      const phase = (time / 13 + .18) % 1;
       cycles.forEach((cycle, i) => {
-        const side = i === 0 ? -1 : 1;
-        const pose = cyclePose(phase, side);
-        cycle.position.set(pose.x, -5, pose.z);
-        cycle.rotation.y = pose.angle;
-        cycle.rotation.z = phase > .43 && phase < .57 ? side * -.18 * Math.sin((phase - .43) / .14 * Math.PI) : 0;
+        const x = i === 0 ? 0 : 10 / 3;
+        const z = i === 0 ? 10 / 3 : -20 / 3;
+        cycle.position.set(x, -5, z);
+        cycle.rotation.y = 0;
+        cycle.rotation.z = Math.sin(time * .72 + i * 1.8) * .04;
         cycle.userData.wheels?.forEach(wheel => { wheel.rotation.x = -time * 10; });
         const wall = trails[i].wall.geometry.attributes.position;
         const edge = trails[i].edge.geometry.attributes.position;
         for (let j = 0; j < samples; j++) {
-          const previous = cyclePose(Math.max(0, phase - j * .006), side);
-          const x = previous.x + Math.sin(previous.angle) * 1.45;
-          const z = previous.z + Math.cos(previous.angle) * 1.45;
-          const height = .9 * (1 - j / samples);
-          wall.setXYZ(j * 2, x, -4.98, z);
-          wall.setXYZ(j * 2 + 1, x, -4.98 + height, z);
-          edge.setXYZ(j, x, -4.98 + height, z);
+          // Straight light walls stay on the grid axes. Body lean never bends them.
+          const trailZ = z + 1.48 + j * .9;
+          wall.setXYZ(j * 2, x, -4.98, trailZ);
+          wall.setXYZ(j * 2 + 1, x, -4.23, trailZ);
+          edge.setXYZ(j, x, -4.23, trailZ);
         }
         wall.needsUpdate = edge.needsUpdate = true;
       });
-      const collision = Math.max(0, 1 - Math.abs(phase - .43) / .055);
-      sparks.material.opacity = collision * .75;
-      const particles = sparksGeometry.attributes.position;
-      for (let i = 0; i < 24; i++) {
-        const angle = i * 2.39996;
-        const radius = (1 - collision) * 2.2;
-        particles.setXYZ(i, Math.cos(angle) * radius, -4.1 + Math.sin(angle * 2) * radius * .55, 5 + Math.sin(angle) * radius);
-      }
-      particles.needsUpdate = true;
       recognizers[0].position.y = 5 + Math.sin(time * .3) * .35;
       recognizers[0].position.x = (compact ? 0 : 5) + Math.sin(time * .13) * (compact ? .3 : 1.2);
       recognizers[0].scale.setScalar(compact ? .85 : 1);

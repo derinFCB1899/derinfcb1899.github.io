@@ -1,39 +1,39 @@
 (() => {
   'use strict';
 
+  let cleanup;
+  function mount() {
+  cleanup?.();
+  const controller = new AbortController();
+  const observers = [];
+  const pointerCleanups = [];
+  const listen = (target, event, callback, options = {}) => target.addEventListener(event, callback, { ...options, signal: controller.signal });
+
   // Content is visible by default. Animation enhances the static page without
   // becoming a dependency for reading, navigation, or opening project links.
   const root = document.documentElement;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  const toggle = document.getElementById('motion-toggle');
   const hero = document.querySelector('.hero');
   const progress = document.querySelector('.reading-progress');
   const running = new Set();
+  const revealAnimations = new Map();
   const pixelJobs = new Map();
-  let manualPause = false;
   let scrollFrame = 0;
 
-  try { manualPause = localStorage.getItem('adc-motion') === 'paused'; } catch {}
-  const canAnimate = () => !manualPause && !reducedMotion.matches && !document.hidden;
+  const canAnimate = () => !reducedMotion.matches && !document.hidden;
 
   function updateMotion() {
-    const disabled = manualPause || reducedMotion.matches;
+    const disabled = reducedMotion.matches;
     root.dataset.motion = disabled ? 'paused' : 'active';
     root.dataset.pageHidden = String(document.hidden);
     if (disabled || document.hidden) {
       [...pixelJobs.values()].forEach(job => job.finish());
     }
-    toggle.hidden = false;
-    toggle.disabled = reducedMotion.matches;
-    toggle.setAttribute('aria-pressed', String(disabled));
-    toggle.querySelector('.motion-label').textContent = reducedMotion.matches
-      ? 'Reduced motion' : manualPause ? 'Enable motion' : 'Pause motion';
-    toggle.querySelector('.motion-icon').textContent = disabled ? '▷' : 'Ⅱ';
-    toggle.title = reducedMotion.matches ? 'Following your device’s reduced-motion preference' : '';
     if (disabled) {
       running.forEach(animation => animation.cancel());
       running.clear();
+      revealAnimations.clear();
       hero.style.removeProperty('--hero-x');
       hero.style.removeProperty('--hero-y');
       document.querySelectorAll('.surface').forEach(surface => surface.style.removeProperty('rotate'));
@@ -44,32 +44,26 @@
     window.dispatchEvent(new CustomEvent('adc:motionchange', { detail: { paused: disabled } }));
   }
 
-  toggle.addEventListener('click', () => {
-    manualPause = !manualPause;
-    try { localStorage.setItem('adc-motion', manualPause ? 'paused' : 'active'); } catch {}
-    updateMotion();
-  });
-  reducedMotion.addEventListener('change', updateMotion);
-  document.addEventListener('visibilitychange', updateMotion);
-  function restorePreference() {
-    try { manualPause = localStorage.getItem('adc-motion') === 'paused'; } catch {}
-    updateMotion();
-  }
-  window.addEventListener('pageshow', restorePreference);
-  window.addEventListener('storage', event => {
-    if (event.key === 'adc-motion') restorePreference();
-  });
+  listen(reducedMotion, 'change', updateMotion);
+  listen(document, 'visibilitychange', updateMotion);
+  listen(window, 'pageshow', updateMotion);
   updateMotion();
 
   function reveal(element, delay = 0) {
     if (!canAnimate() || typeof element.animate !== 'function') return;
     const entrance = element.hasAttribute('data-entrance');
     const animation = element.animate([
-      { opacity: entrance ? 0 : .45, transform: 'perspective(1200px) translate3d(0, 50px, -35px) rotateX(8deg)', filter: entrance ? 'blur(5px)' : 'blur(1px)' },
-      { opacity: 1, transform: 'perspective(1200px) translate3d(0, 0, 0) rotateX(0deg)', filter: 'blur(0px)' }
-    ], { duration: entrance ? 1200 : 1000, delay, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' });
+      { opacity: entrance ? 0 : .45, transform: entrance ? 'perspective(1200px) translate3d(0, 30px, -20px) rotateX(5deg)' : 'none', filter: entrance ? 'blur(5px)' : 'blur(1px)' },
+      { opacity: 1, transform: entrance ? 'perspective(1200px) translate3d(0, 0, 0) rotateX(0deg)' : 'none', filter: 'blur(0px)' }
+    ], { duration: entrance ? 1500 : 1450, delay, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' });
+    revealAnimations.get(element)?.cancel();
+    revealAnimations.set(element, animation);
     running.add(animation);
-    animation.finished.then(() => running.delete(animation), () => running.delete(animation));
+    const cleanup = () => {
+      running.delete(animation);
+      if (revealAnimations.get(element) === animation) revealAnimations.delete(element);
+    };
+    animation.finished.then(cleanup, cleanup);
   }
 
   const alreadyPainted = performance.getEntriesByType?.('paint').some(entry => entry.name === 'first-contentful-paint');
@@ -105,7 +99,7 @@
     let finished = false;
     let glitch;
     const start = performance.now();
-    const duration = 700;
+    const duration = 1600;
     const finish = () => {
       if (finished) return;
       finished = true;
@@ -121,12 +115,14 @@
 
     function paint(progress) {
       context.clearRect(0, 0, columns, rows);
-      const phase = Math.floor(progress * 12) / 12;
+      const phase = progress;
       tiles.forEach(tile => {
         if (phase >= tile.release) return;
         // Never fully cover the real content, and keep the accent sparse.
-        const alpha = (tile.accent ? .15 : .57) * (1 - phase * .7);
-        context.fillStyle = tile.accent ? 'rgba(103,237,255,' + alpha + ')' : 'rgba(7,17,31,' + alpha + ')';
+        const fade = Math.max(0, Math.min(1, (phase - tile.release + .28) / .28));
+        const alpha = (tile.accent ? .16 : .46) * (1 - fade * fade * (3 - 2 * fade));
+        const color = root.dataset.theme === 'light' ? (tile.accent ? '255,205,122' : '207,80,125') : (tile.accent ? '103,237,255' : '7,17,31');
+        context.fillStyle = 'rgba(' + color + ',' + alpha + ')';
         context.fillRect(tile.x, tile.y, 1, 1);
       });
     }
@@ -135,7 +131,7 @@
       if (!canAnimate() || element.contains(document.activeElement)) { finish(); return; }
       const progress = Math.min(1, (now - start) / duration);
       if (progress >= 1) { finish(); return; }
-      if (now - lastPaint >= 32) { paint(progress); lastPaint = now; }
+      if (now - lastPaint >= 16) { paint(progress); lastPaint = now; }
       frame = requestAnimationFrame(tick);
     }
     paint(0);
@@ -150,13 +146,16 @@
         { offset: .5, textShadow: '-1px 0 rgba(103,237,255,.3), 1px 0 rgba(237,134,237,.3)', translate: '-1px 0px' },
         { offset: .62, textShadow: '0 0 transparent', translate: '0px 0px' },
         { offset: 1, textShadow: '0 0 transparent', translate: '0px 0px' }
-      ], { duration: 520, easing: 'steps(1, end)' });
+      ], { duration: 1000, easing: 'cubic-bezier(.4,0,.2,1)' });
       running.add(glitch);
       glitch.finished.then(() => running.delete(glitch), () => running.delete(glitch));
     }
   }
 
-  document.addEventListener('focusin', event => {
+  listen(document, 'focusin', event => {
+    for (const [element, animation] of revealAnimations) {
+      if (element.contains(event.target)) { animation.cancel(); running.delete(animation); revealAnimations.delete(element); }
+    }
     for (const [element, job] of pixelJobs) {
       if (element.contains(event.target)) job.finish();
     }
@@ -181,7 +180,7 @@
         if (!state.armed) return;
         state.armed = false;
         const now = performance.now();
-        if (now - state.lastPlayed < 2200 || !canAnimate()) return;
+        if (now - state.lastPlayed < 3200 || !canAnimate()) return;
         state.lastPlayed = now;
         if (!entry.target.contains(document.activeElement)) reveal(entry.target);
         pixelReveal(entry.target);
@@ -197,6 +196,7 @@
       hero.dataset.inView = String(entries[0].isIntersecting);
     }, { threshold: 0 });
     heroVisibility.observe(hero);
+    observers.push(reveals, heroVisibility);
   } else {
     hero.dataset.inView = 'true';
   }
@@ -211,16 +211,17 @@
   function queueScroll() {
     if (!scrollFrame) scrollFrame = requestAnimationFrame(updateScroll);
   }
-  window.addEventListener('scroll', queueScroll, { passive: true });
-  window.addEventListener('resize', queueScroll, { passive: true });
-  window.addEventListener('load', queueScroll, { once: true });
+  listen(window, 'scroll', queueScroll, { passive: true });
+  listen(window, 'resize', queueScroll, { passive: true });
+  listen(window, 'load', queueScroll, { once: true });
   updateScroll();
 
   // Pointer effects run only on pointer events, with at most one update per frame.
   document.querySelectorAll('.surface, .hero').forEach(surface => {
     let pointerFrame = 0;
     let point = null;
-    surface.addEventListener('pointermove', event => {
+    pointerCleanups.push(() => cancelAnimationFrame(pointerFrame));
+    listen(surface, 'pointermove', event => {
       if (!canAnimate() || !finePointer.matches || event.pointerType === 'touch') return;
       point = { x: event.clientX, y: event.clientY };
       if (pointerFrame) return;
@@ -243,7 +244,7 @@
         }
       });
     }, { passive: true });
-    surface.addEventListener('pointerleave', () => {
+    listen(surface, 'pointerleave', () => {
       point = null;
       cancelAnimationFrame(pointerFrame);
       pointerFrame = 0;
@@ -256,14 +257,28 @@
   });
 
   document.querySelectorAll('.button').forEach(button => {
-    button.addEventListener('pointermove', event => {
+    listen(button, 'pointermove', event => {
       if (!canAnimate() || !finePointer.matches || event.pointerType === 'touch') return;
       const bounds = button.getBoundingClientRect();
       const x = (event.clientX - bounds.left - bounds.width / 2) * .11;
       const y = (event.clientY - bounds.top - bounds.height / 2) * .18;
       button.style.translate = Math.max(-8, Math.min(8, x)).toFixed(1) + 'px ' + Math.max(-5, Math.min(5, y)).toFixed(1) + 'px';
     }, { passive: true });
-    button.addEventListener('pointerleave', () => button.style.removeProperty('translate'));
-    button.addEventListener('blur', () => button.style.removeProperty('translate'));
+    listen(button, 'pointerleave', () => button.style.removeProperty('translate'));
+    listen(button, 'blur', () => button.style.removeProperty('translate'));
   });
+  cleanup = () => {
+    controller.abort();
+    observers.forEach(observer => observer.disconnect());
+    pointerCleanups.forEach(cancel => cancel());
+    cancelAnimationFrame(scrollFrame);
+    [...pixelJobs.values()].forEach(job => job.finish());
+    running.forEach(animation => animation.cancel());
+    running.clear();
+    revealAnimations.clear();
+  };
+  }
+  mount();
+  window.addEventListener('adc:pagebeforechange', () => { cleanup?.(); cleanup = null; });
+  window.addEventListener('adc:pagechange', mount);
 })();

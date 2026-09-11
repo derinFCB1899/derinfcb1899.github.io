@@ -141,7 +141,16 @@ function batchSurfaces(THREE, group) {
   }
 }
 
-export function createRetroCar(THREE, accent = '#ff359c') {
+/** Three distinct 1980s silhouettes. Unknown variants retain the original wedge. */
+export function createRetroCar(THREE, accent = '#ff359c', variant = 'wedge') {
+  if (variant === 'boxy') return createBoxyCar(THREE, accent);
+  if (variant === 'targa') return createTargaCar(THREE, accent);
+  const car = createWedgeCar(THREE, accent);
+  car.userData.variant = 'wedge';
+  return car;
+}
+
+function createWedgeCar(THREE, accent = '#ff359c') {
   const car = new THREE.Group();
   car.name = 'Retro wedge coupe';
   const paint = material(THREE, '#351427', { metalness: 0.65, roughness: 0.36 });
@@ -262,6 +271,245 @@ export function createRetroCar(THREE, accent = '#ff359c') {
   car.userData.wheelAxis = 'X';
   batchSurfaces(THREE, car);
   return car;
+}
+
+function retroMaterials(THREE, accent) {
+  return {
+    paint: material(THREE, '#351427', { metalness: 0.65, roughness: 0.36 }),
+    shoulder: material(THREE, '#572038', { metalness: 0.6, roughness: 0.34 }),
+    dark: material(THREE, '#0a0c17', { roughness: 0.72 }),
+    rubber: material(THREE, '#08090e', { metalness: 0.02, roughness: 0.96 }),
+    alloy: material(THREE, '#697080', { metalness: 0.86, roughness: 0.28 }),
+    glass: material(THREE, '#111b31', {
+      emissive: '#142139', emissiveIntensity: 0.2, metalness: 0.82,
+      roughness: 0.12, side: THREE.DoubleSide,
+    }),
+    trim: glow(THREE, accent, 2.0),
+    rearLight: glow(THREE, '#ff254a', 3.2),
+    headLight: glow(THREE, '#dafaff', 3.0),
+  };
+}
+
+/** Wheels remain groups, with their axle along X and the tire surface at y=0. */
+function addRetroWheels(THREE, car, m, { axleZ = 1.45, spokes = 4 } = {}) {
+  const tire = new THREE.CylinderGeometry(0.39, 0.39, 0.28, 20);
+  const shoulder = new THREE.TorusGeometry(0.315, 0.085, 6, 20);
+  const hub = new THREE.CylinderGeometry(0.245, 0.245, 0.024, 12);
+  const rim = new THREE.TorusGeometry(0.263, 0.019, 5, 20);
+  const spoke = new THREE.BoxGeometry(0.026, 0.045, 0.185);
+  car.userData.wheels = [];
+  for (const sign of [-1, 1]) {
+    for (const z of [-axleZ, axleZ]) {
+      const wheel = new THREE.Group();
+      wheel.position.set(sign * 0.965, 0.4, z);
+      wheel.name = `${z < 0 ? 'Front' : 'Rear'} ${sign < 0 ? 'left' : 'right'} wheel`;
+      mesh(THREE, wheel, tire, m.rubber).rotation.z = Math.PI / 2;
+      for (const face of [-1, 1]) {
+        mesh(THREE, wheel, shoulder, m.rubber, [face * 0.075, 0, 0]).rotation.y = Math.PI / 2;
+      }
+      const faceX = sign * 0.156;
+      mesh(THREE, wheel, hub, m.dark, [faceX, 0, 0]).rotation.z = Math.PI / 2;
+      mesh(THREE, wheel, rim, m.trim, [faceX + sign * 0.006, 0, 0]).rotation.y = Math.PI / 2;
+      for (let i = 0; i < spokes; i++) {
+        const angle = i * Math.PI * 2 / spokes;
+        const radialSpoke = mesh(THREE, wheel, spoke, m.alloy,
+          [faceX + sign * 0.016, -Math.sin(angle) * 0.14, Math.cos(angle) * 0.14]);
+        radialSpoke.rotation.x = angle;
+      }
+      car.add(wheel);
+      car.userData.wheels.push(wheel);
+      batchSurfaces(THREE, wheel);
+    }
+  }
+}
+
+function finishRetroCar(THREE, car, m, variant, spokes) {
+  addRetroWheels(THREE, car, m, { spokes });
+  car.userData.variant = variant;
+  car.userData.forwardAxis = '-Z';
+  car.userData.wheelAxis = 'X';
+  batchSurfaces(THREE, car);
+  return car;
+}
+
+/** Upright notchback cabin, square bonnet and trunk, and broad impact bumpers. */
+function createBoxyCar(THREE, accent) {
+  const car = new THREE.Group();
+  car.name = '1980s boxy notchback coupe';
+  const m = retroMaterials(THREE, accent);
+  mesh(THREE, car, taperedProfile(THREE, [
+    [-2.36, 0.29, 0.85], [-2.36, 0.93, 0.87], [-2.18, 1.00, 0.88],
+    [-0.92, 1.00, 0.88], [1.19, 1.00, 0.88], [2.27, 0.99, 0.88],
+    [2.36, 0.91, 0.87], [2.36, 0.29, 0.85],
+  ]), m.paint);
+  const flank = profile(THREE, [
+    [-2.36, 0.29], [-2.36, 0.92], [-2.18, 1.03], [2.27, 1.02],
+    [2.36, 0.91], [2.36, 0.29], [1.97, 0.29], [1.97, 0.45],
+    [1.86, 0.68], [1.65, 0.84], [1.25, 0.84], [1.04, 0.67],
+    [0.93, 0.43], [0.93, 0.27], [-0.93, 0.27], [-0.93, 0.43],
+    [-1.04, 0.67], [-1.25, 0.84], [-1.65, 0.84], [-1.86, 0.68],
+    [-1.97, 0.45], [-1.97, 0.29],
+  ], 0.10);
+  for (const sign of [-1, 1]) {
+    mesh(THREE, car, flank, m.shoulder, [sign * 0.94, 0, 0]);
+    box(THREE, car, m.dark, [0.034, 0.075, 4.56], [sign * 1.048, 0.91, 0]);
+    box(THREE, car, m.trim, [0.024, 0.022, 1.73], [sign * 1.065, 0.48, 0]);
+    box(THREE, car, m.dark, [0.025, 0.36, 0.019], [sign * 1.05, 0.72, 0.60]);
+    box(THREE, car, m.alloy, [0.03, 0.05, 0.23], [sign * 1.066, 0.90, 0.37]);
+  }
+  // A long flat roof and steep rear window make a clear three-box silhouette.
+  mesh(THREE, car, taperedProfile(THREE, [
+    [-1.01, 1.0, 0.90], [-0.52, 1.66, 0.73],
+    [0.83, 1.66, 0.73], [1.26, 1.0, 0.90],
+  ]), m.paint);
+  box(THREE, car, m.shoulder, [1.48, 0.045, 1.37], [0, 1.669, 0.15]);
+  panel(THREE, car, m.glass, [
+    [-0.853, 1.045, -0.989], [0.853, 1.045, -0.989],
+    [0.697, 1.627, -0.549], [-0.697, 1.627, -0.549],
+  ]);
+  panel(THREE, car, m.glass, [
+    [-0.697, 1.624, 0.858], [0.697, 1.624, 0.858],
+    [0.851, 1.049, 1.239], [-0.851, 1.049, 1.239],
+  ]);
+  for (const sign of [-1, 1]) {
+    // Two actual panes split by a thick, upright B pillar.
+    panel(THREE, car, m.glass, [
+      [sign * 0.892, 1.055, -0.94], [sign * 0.746, 1.618, -0.499],
+      [sign * 0.746, 1.618, 0.35], [sign * 0.892, 1.055, 0.35],
+    ]);
+    panel(THREE, car, m.glass, [
+      [sign * 0.892, 1.055, 0.45], [sign * 0.746, 1.618, 0.45],
+      [sign * 0.746, 1.618, 0.80], [sign * 0.892, 1.055, 1.20],
+    ]);
+    beam(THREE, car, m.dark, [sign * 0.895, 1.045, 0.40], [sign * 0.744, 1.643, 0.40], 0.04);
+    beam(THREE, car, m.alloy, [sign * 0.916, 1.044, -0.96], [sign * 0.916, 1.044, 1.23], 0.013);
+    box(THREE, car, m.dark, [0.22, 0.14, 0.23], [sign * 1.006, 1.13, -0.78]);
+    beam(THREE, car, m.dark, [sign * 0.64, 1.007, -2.12], [sign * 0.64, 1.01, -1.03], 0.011);
+    // Paired rectangular headlamps sit vertically in the square front fascia.
+    for (const x of [0.50, 0.79]) {
+      box(THREE, car, m.dark, [0.29, 0.24, 0.034], [sign * x, 0.805, -2.374]);
+      box(THREE, car, m.headLight, [0.22, 0.145, 0.021], [sign * x, 0.819, -2.399]);
+    }
+    box(THREE, car, m.trim, [0.19, 0.06, 0.025], [sign * 0.84, 0.52, -2.467]);
+    box(THREE, car, m.rearLight, [0.61, 0.19, 0.031], [sign * 0.67, 0.82, 2.381]);
+    box(THREE, car, m.dark, [0.026, 0.20, 0.041], [sign * 0.65, 0.82, 2.40]);
+  }
+  box(THREE, car, m.dark, [0.70, 0.23, 0.03], [0, 0.81, -2.382]);
+  for (const y of [0.75, 0.81, 0.87]) {
+    box(THREE, car, m.alloy, [0.62, 0.014, 0.014], [0, y, -2.405]);
+  }
+  for (const z of [-2.38, 2.38]) {
+    box(THREE, car, m.dark, [2.16, 0.17, 0.21], [0, 0.60, z]);
+    box(THREE, car, m.alloy, [2.03, 0.025, 0.022], [0, 0.643, z + Math.sign(z) * 0.11]);
+  }
+  box(THREE, car, m.dark, [0.37, 0.16, 0.023], [0, 0.80, 2.381]);
+  box(THREE, car, m.alloy, [0.26, 0.10, 0.015], [0, 0.80, 2.398]);
+  // Subtle factory trunk lip instead of the wedge's elevated spoiler.
+  box(THREE, car, m.shoulder, [1.91, 0.067, 0.13], [0, 1.042, 2.20]);
+  return finishRetroCar(THREE, car, m, 'boxy', 4);
+}
+
+/** Low sports body with a genuinely open cockpit, targa hoop and ducktail rear. */
+function createTargaCar(THREE, accent) {
+  const car = new THREE.Group();
+  car.name = '1980s open-roof targa sports car';
+  const m = retroMaterials(THREE, accent);
+  // Keep the center body below the cockpit sill, leaving no solid roof/cabin fill.
+  mesh(THREE, car, taperedProfile(THREE, [
+    [-2.35, 0.28, 0.76], [-2.35, 0.57, 0.81], [-1.93, 0.80, 0.86],
+    [-0.96, 0.83, 0.88], [-0.61, 0.75, 0.88], [0.95, 0.75, 0.88],
+    [1.29, 0.87, 0.89], [2.34, 0.77, 0.83], [2.34, 0.28, 0.78],
+  ]), m.paint);
+  const flank = profile(THREE, [
+    [-2.35, 0.28], [-2.35, 0.56], [-1.94, 0.84], [-1.0, 0.89],
+    [-0.68, 0.83], [0.87, 0.83], [1.17, 0.93], [1.92, 0.91],
+    [2.34, 0.78], [2.34, 0.28], [1.98, 0.28], [1.98, 0.44],
+    [1.86, 0.69], [1.65, 0.83], [1.25, 0.83], [1.04, 0.67],
+    [0.93, 0.43], [0.93, 0.25], [-0.93, 0.25], [-0.93, 0.43],
+    [-1.04, 0.67], [-1.25, 0.83], [-1.65, 0.83], [-1.86, 0.69],
+    [-1.98, 0.44], [-1.98, 0.28],
+  ], 0.105);
+  for (const sign of [-1, 1]) {
+    mesh(THREE, car, flank, m.shoulder, [sign * 0.94, 0, 0]);
+    box(THREE, car, m.dark, [0.035, 0.10, 1.76], [sign * 1.05, 0.35, 0]);
+    box(THREE, car, m.trim, [0.026, 0.025, 1.73], [sign * 1.072, 0.46, 0]);
+    box(THREE, car, m.alloy, [0.03, 0.035, 0.16], [sign * 1.057, 0.78, 0.37]);
+    // Deep side intake boxes behind the doors visually separate the rear haunches.
+    box(THREE, car, m.dark, [0.029, 0.15, 0.32], [sign * 1.054, 0.64, 0.73]);
+    for (const z of [0.62, 0.72, 0.82]) {
+      box(THREE, car, m.shoulder, [0.035, 0.16, 0.025], [sign * 1.078, 0.64, z]);
+    }
+  }
+  // Black recessed cockpit floor, two seats, console and dashboard remain visible.
+  box(THREE, car, m.dark, [1.59, 0.035, 1.53], [0, 0.783, 0.10]);
+  box(THREE, car, m.dark, [1.59, 0.15, 0.22], [0, 0.90, -0.64]);
+  box(THREE, car, m.shoulder, [0.17, 0.13, 0.93], [0, 0.85, 0.08]);
+  for (const sign of [-1, 1]) {
+    box(THREE, car, m.dark, [0.58, 0.10, 0.59], [sign * 0.43, 0.87, 0.15]);
+    const seat = box(THREE, car, m.dark, [0.57, 0.39, 0.13], [sign * 0.43, 1.08, 0.46]);
+    seat.rotation.x = -0.16;
+    box(THREE, car, m.dark, [0.32, 0.15, 0.12], [sign * 0.43, 1.31, 0.51]);
+    beam(THREE, car, m.trim, [sign * 0.43, 0.927, -0.10], [sign * 0.43, 0.927, 0.37], 0.012);
+  }
+  const steeringWheel = mesh(THREE, car, new THREE.TorusGeometry(0.155, 0.02, 5, 12), m.dark, [-0.43, 1.025, -0.46]);
+  steeringWheel.rotation.x = -0.30;
+  beam(THREE, car, m.alloy, [-0.43, 0.90, -0.53], [-0.43, 1.025, -0.46], 0.02);
+  // Only the windshield spans the cabin: the large region behind it is open air.
+  panel(THREE, car, m.glass, [
+    [-0.835, 0.895, -0.93], [0.835, 0.895, -0.93],
+    [0.69, 1.40, -0.39], [-0.69, 1.40, -0.39],
+  ]);
+  for (const sign of [-1, 1]) {
+    beam(THREE, car, m.paint, [sign * 0.863, 0.875, -0.96], [sign * 0.713, 1.42, -0.375], 0.034);
+    // Low quarterlights leave the area above the doors open.
+    panel(THREE, car, m.glass, [
+      [sign * 0.866, 0.852, -0.86], [sign * 0.774, 1.162, -0.61],
+      [sign * 0.831, 0.935, -0.42], [sign * 0.866, 0.852, -0.42],
+    ]);
+    box(THREE, car, m.dark, [0.21, 0.10, 0.22], [sign * 1.001, 0.967, -0.67]);
+    beam(THREE, car, m.alloy, [sign * 0.882, 0.86, -0.50], [sign * 0.882, 0.86, 0.77], 0.016);
+    // Thick targa pillars and tapered flying buttresses frame the rear deck.
+    beam(THREE, car, m.shoulder, [sign * 0.873, 0.865, 0.84], [sign * 0.724, 1.44, 0.80], 0.075, 0.062, 4);
+    const buttress = profile(THREE, [[0.80, 1.42], [0.91, 1.42], [1.58, 0.93], [0.95, 0.86]], 0.078);
+    mesh(THREE, car, buttress, m.paint, [sign * 0.74, 0, 0]);
+  }
+  box(THREE, car, m.paint, [1.46, 0.075, 0.10], [0, 1.415, -0.375]);
+  box(THREE, car, m.shoulder, [1.58, 0.10, 0.22], [0, 1.44, 0.83]);
+  box(THREE, car, m.trim, [1.48, 0.017, 0.023], [0, 1.495, 0.83]);
+  panel(THREE, car, m.glass, [
+    [-0.663, 0.921, 0.973], [0.663, 0.921, 0.973],
+    [0.663, 1.386, 0.933], [-0.663, 1.386, 0.933],
+  ]);
+  box(THREE, car, m.dark, [1.13, 0.035, 0.79], [0, 0.958, 1.53]);
+  for (let i = 0; i < 6; i++) {
+    box(THREE, car, m.shoulder, [1.12, 0.026, 0.036], [0, 0.986, 1.21 + i * 0.125]);
+  }
+  for (const sign of [-1, 1]) {
+    // Raised pop-up pods produce a different front profile from the low wedge.
+    mesh(THREE, car, taperedProfile(THREE, [
+      [-2.07, 0.71, 0.235], [-2.07, 0.98, 0.235],
+      [-1.61, 0.83, 0.225], [-1.61, 0.77, 0.225],
+    ]), m.shoulder, [sign * 0.59, 0, 0]);
+    box(THREE, car, m.dark, [0.43, 0.18, 0.018], [sign * 0.59, 0.878, -2.08]);
+    box(THREE, car, m.headLight, [0.35, 0.13, 0.018], [sign * 0.59, 0.885, -2.095]);
+    box(THREE, car, m.trim, [0.26, 0.05, 0.024], [sign * 0.70, 0.45, -2.365]);
+    for (const x of [0.50, 0.79]) {
+      const lamp = mesh(THREE, car, new THREE.CylinderGeometry(0.092, 0.092, 0.028, 12), m.rearLight, [sign * x, 0.626, 2.365]);
+      lamp.rotation.x = Math.PI / 2;
+    }
+    box(THREE, car, m.alloy, [0.16, 0.095, 0.18], [sign * 0.74, 0.30, 2.30]);
+  }
+  box(THREE, car, m.dark, [1.83, 0.085, 0.17], [0, 0.29, -2.33]);
+  box(THREE, car, m.dark, [0.81, 0.10, 0.023], [0, 0.432, -2.365]);
+  box(THREE, car, m.dark, [1.91, 0.24, 0.03], [0, 0.63, 2.343]);
+  // The wide, swept ducktail rises directly out of the deck; no raised wing legs.
+  mesh(THREE, car, taperedProfile(THREE, [
+    [1.93, 0.82, 0.98], [2.28, 1.08, 1.07],
+    [2.38, 1.075, 1.065], [2.34, 0.775, 0.94],
+  ]), m.shoulder);
+  box(THREE, car, m.trim, [2.07, 0.022, 0.023], [0, 1.081, 2.375]);
+  box(THREE, car, m.dark, [1.94, 0.08, 0.17], [0, 0.28, 2.30]);
+  return finishRetroCar(THREE, car, m, 'targa', 5);
 }
 
 export function createLightCycle(THREE, accent = '#49edff') {

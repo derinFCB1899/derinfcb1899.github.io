@@ -2,7 +2,8 @@
   'use strict';
   const root = document.documentElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const targets = [...document.querySelectorAll('.brand-word, .title-line, .section-heading h2, .feature-content h3, .project-card h3, .toolkit h3')];
+  const findTargets = () => [...document.querySelectorAll('.brand-word, .title-line, .section-heading h2, .feature-content h3, .project-card h3, .toolkit h3')];
+  let targets = findTargets();
   if (!targets.length || typeof targets[0].animate !== 'function') return;
   targets.forEach(target => target.classList.add('signal-text'));
   let timer = 0;
@@ -101,5 +102,13 @@
   window.addEventListener('pageswap', () => { leaving = true; sync(); });
   window.addEventListener('pagehide', () => { leaving = true; sync(); });
   window.addEventListener('pageshow', () => { leaving = false; schedule(true); });
+  window.addEventListener('adc:pagebeforechange', () => { leaving = true; sync(); });
+  window.addEventListener('adc:pagechange', () => {
+    targets = findTargets();
+    targets.forEach(target => target.classList.add('signal-text'));
+    lastTarget = null;
+    leaving = false;
+    schedule(true);
+  });
   schedule(true);
 })();

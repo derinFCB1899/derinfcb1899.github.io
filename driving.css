@@ -1,4 +1,4 @@
-/* Sunset and TRON surfaces, with a retro Spotify deck. */
+/* Sunset and TRON surfaces, with a compact audio deck. */
 .world-shade { z-index:3; }
 .world::after { z-index:4; }
 html[data-theme='light'] .world { background:radial-gradient(ellipse at 72% 35%,#ffe076bb,transparent 36%),linear-gradient(180deg,#ffb348 0%,#ff9363 24%,#ff6991 46%,#e33b99 66%,#823698 82%,#ffc493 100%); }
@@ -6,30 +6,31 @@ html[data-theme='light'] .hero::after { background:linear-gradient(0deg,var(--bg
 html[data-theme='light'] .celestial-sun { filter:saturate(1.25); }
 html[data-theme='light'] .button-quiet { color:#50193e; }
 .soundtrack-toggle { border:1px solid var(--cyan); border-bottom-width:3px; border-radius:0; box-shadow:3px 3px 0 #0007,0 0 18px #36e7ff16; letter-spacing:.04em; }
-.soundtrack { width:min(430px,calc(100vw - 32px)); padding:16px; border:2px solid #366576; border-bottom:6px solid #02090f; border-radius:3px; background:repeating-linear-gradient(0deg,#10202d,#10202d 2px,#102330 3px); box-shadow:5px 5px 0 #02070be8,0 20px 80px #0008,inset 0 0 0 2px #1e3644; color:#dbfaff; }
-.soundtrack-heading { gap:10px; margin-bottom:14px; }
+.soundtrack { width:min(340px,calc(100vw - 32px)); padding:12px; border:2px solid #366576; border-bottom:5px solid #02090f; border-radius:3px; background:repeating-linear-gradient(0deg,#10202d,#10202d 2px,#102330 3px); box-shadow:5px 5px 0 #02070be8,0 20px 80px #0008,inset 0 0 0 2px #1e3644; color:#dbfaff; }
+.soundtrack-heading { gap:8px; margin-bottom:8px; }
 .soundtrack-heading h2 { font:600 .9rem var(--mono); text-transform:uppercase; letter-spacing:.08em; }
 .deck-edition { margin-left:auto; font:.75rem var(--mono); color:#88adbf; }
 .soundtrack-close { color:#dcfaff; background:#1b3544; border-color:#537d90; border-radius:0; min-width:36px; min-height:36px; }
-.deck-display { display:grid; grid-template-columns:1fr auto; gap:12px; padding:16px; background:#041014; border:2px solid #02070a; box-shadow:inset 0 0 22px #43e8ff12,0 1px 0 #568294; color:#8cefff; }
+.deck-display { padding:10px 12px; background:#041014; border:2px solid #02070a; border-bottom:0; box-shadow:inset 0 0 22px #43e8ff12; color:#8cefff; }
 .deck-track { min-width:0; display:flex; flex-direction:column; gap:5px; }
 .deck-side { font:.75rem var(--mono); color:#6caaa9; letter-spacing:.13em; }
-.deck-track strong { font:700 1.75rem/1 var(--display); letter-spacing:.1em; text-shadow:0 0 16px #2aebff77; }
+.deck-track strong { font:700 1.25rem/1.2 var(--display); letter-spacing:.08em; text-shadow:0 0 16px #2aebff77; }
 .deck-track>span:last-child { font:.75rem/1.6 var(--mono); }
 .deck-time { align-self:center; font:500 1.25rem var(--mono); }
 #deck-progress { display:block; grid-column:1/-1; width:100%; height:5px; accent-color:#78faff; border:0; background:#173b48; }
 #deck-progress::-webkit-progress-bar { background:#173b48; }
 #deck-progress::-webkit-progress-value { background:repeating-linear-gradient(90deg,#70e8ff 0px,#70e8ff 4px,#173b48 4px,#173b48 6px); box-shadow:0 0 8px #70e8ff; }
 #deck-progress::-moz-progress-bar { background:#70e8ff; }
-.deck-transport { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; padding:14px 0; }
+.deck-transport { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding-top:8px; }
 .deck-play,.deck-eject { display:flex; gap:9px; align-items:center; justify-content:center; min-height:46px; padding:10px 14px; border:1px solid #72a3b4; border-bottom:4px solid #2c4c61; border-radius:1px; background:linear-gradient(#dcf2ef,#8eabb3); color:#102632; font:600 .875rem var(--mono); box-shadow:0 3px 0 #03090e; }
 .deck-play:active,.deck-eject:active { translate:0 2px; box-shadow:none; }
 .deck-play:disabled { opacity:.55; cursor:wait; }
-.deck-eject { padding:10px; font-size:1.15rem; background:linear-gradient(#3a5a6f,#203c50); color:#d2f6ff; text-decoration:none; }
+.deck-eject { min-height:36px; padding:6px 8px; gap:4px; font-size:1rem; background:linear-gradient(#3a5a6f,#203c50); color:#d2f6ff; text-decoration:none; }
 .deck-eject span { font-size:.75rem; }
 .deck-status { color:#a8c6d5; font:.75rem/1.5 var(--mono); }
-.spotify-mount { min-height:152px; background:#000; outline:1px solid #466071; }
-.soundtrack .spotify-mount iframe { border-radius:0; width:100%; height:152px; }
+.music-mount { min-height:42px; padding:4px; background:#041014; border:2px solid #02070a; border-top:0; }
+.soundtrack .music-mount iframe { border-radius:0; width:100%; height:42px; background:#041014; }
+.deck-reload { display:grid; place-items:center; min-width:36px; min-height:36px; padding:3px; border:1px solid #537d90; color:inherit; background:transparent; font-size:1.2rem; }
 .soundtrack-note { color:#a0bac9; margin-top:13px; font-size:.75rem; }
 html[data-theme='light'] .soundtrack { border-color:#b64c81; border-bottom-color:#58194e; background:repeating-linear-gradient(0deg,#f6a88f,#f6a88f 2px,#f2a18f 3px); color:#51153f; box-shadow:5px 5px 0 #7f2865bb,0 20px 70px #6d164655,inset 0 0 0 2px #ffcc9c; }
 html[data-theme='light'] .deck-edition,html[data-theme='light'] .deck-status,html[data-theme='light'] .soundtrack-note { color:#692e50; }
@@ -39,4 +40,6 @@ html[data-theme='light'] .deck-track strong { text-shadow:0 0 18px #ff555599; }
 html[data-theme='light'] .deck-play { background:linear-gradient(#fff0c6,#efb795); border-color:#a65b7a; border-bottom-color:#874560; color:#501836; }
 html[data-theme='light'] .deck-eject,html[data-theme='light'] .soundtrack-close { background:linear-gradient(#945272,#61284d); color:#ffe7b9; border-color:#d18a9d; }
 @media(max-width:800px) { .celestial { top:320px; } }
-@media(max-width:520px) { .celestial { top:300px; } .soundtrack { padding:12px; } .deck-edition { font-size:.75rem; letter-spacing:-.04em; } .deck-transport { gap:8px; } .deck-play { padding-inline:11px; } .deck-eject span { display:none; } .deck-track strong { font-size:1.5rem; } }
+@media(max-width:520px) { .celestial { top:300px; } .soundtrack { padding:10px; } .deck-edition { font-size:.75rem; letter-spacing:-.04em; } .deck-track strong { font-size:1.25rem; } }
+
+.deck-mark { align-self:center; text-align:right; font:.75rem/1.8 var(--mono); letter-spacing:.1em; opacity:.8; }

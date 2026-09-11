@@ -13,15 +13,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/immersive.css">
-  <script src="/motion.js" defer></script>
-  <link rel="stylesheet" href="/pages.css">
+  <script src="/motion.js?v=continuous4" defer></script>
+  <link rel="stylesheet" href="/pages.css?v=continuous4">
   <link rel="stylesheet" href="/header.css">
-  <link rel="stylesheet" href="/retrowave.css?v=drive2">
-  <link rel="stylesheet" href="/driving.css?v=drive2">
-  <script src="/pages.js"></script>
-  <script src="/entrance.js" defer></script>
-  <script src="/glitch.js" defer></script>
-  <script src="/retrowave.js?v=drive2" defer></script>
+  <link rel="stylesheet" href="/retrowave.css?v=continuous4">
+  <link rel="stylesheet" href="/driving.css?v=continuous4">
+  <script src="/pages.js?v=continuous4"></script>
+  <script src="/entrance.js?v=continuous4" defer></script>
+  <script src="/glitch.js?v=continuous4" defer></script>
+  <script src="/retrowave.js?v=continuous4" defer></script>
 </head>
 <body>
   <div class="route-shutter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -81,15 +81,15 @@
     </section>
 <a class="next-page wrap" href="/contact/" data-reveal><span class="eyebrow">UP NEXT / 03</span><span class="next-title">Make a connection.<span aria-hidden="true">↗</span></span></a>
 </main>
-  <footer class="wrap"><span>© 2026 Ahmet Derin Cabuk</span><div class="footer-controls"><button id="motion-toggle" type="button" aria-pressed="false" hidden><span class="motion-icon" aria-hidden="true">Ⅱ</span><span class="motion-label">Pause motion</span></button><a href="#">Back to top ↑</a></div></footer>
+  <footer class="wrap"><span>© 2026 Ahmet Derin Cabuk</span><div class="footer-controls"><a href="#">Back to top ↑</a></div></footer>
   <button id="soundtrack-toggle" class="soundtrack-toggle" type="button" aria-controls="soundtrack" aria-expanded="false" hidden><span class="soundtrack-glyph" aria-hidden="true">▰</span> Soundtrack</button>
   <aside id="soundtrack" class="soundtrack" aria-labelledby="soundtrack-title" hidden>
     <div class="soundtrack-heading"><h2 id="soundtrack-title">Soundtrack</h2><span class="deck-edition" aria-hidden="true">ADC / TAPE 01</span><button class="soundtrack-close" id="soundtrack-close" type="button" aria-label="Minimize soundtrack player">−</button></div>
-    <div class="deck-display"><div class="deck-track"><span class="deck-side">SIDE A</span><strong>ZENITH</strong><span>KAVINSKY · INSTRUMENTAL</span></div><span id="deck-time" class="deck-time" aria-label="Playback time" aria-live="off">0:00</span><progress id="deck-progress" max="100" value="0" aria-label="Track progress"></progress></div>
-    <div class="deck-transport"><button id="deck-play" class="deck-play" type="button" disabled><span id="deck-play-icon" aria-hidden="true">▶</span><span id="deck-play-label">Play</span></button><span id="deck-status" class="deck-status" role="status">Ready to connect</span><a class="deck-eject" href="https://open.spotify.com/track/5qOYTOVY0bn48XIt6LTdQ3" target="_blank" rel="noopener noreferrer" aria-label="Open soundtrack in Spotify">↗<span>Spotify</span></a></div>
-    <div id="spotify-mount" class="spotify-mount"><iframe id="spotify-player" title="Spotify: Zenith – Instrumental by Kavinsky" data-src="https://open.spotify.com/embed/track/5qOYTOVY0bn48XIt6LTdQ3?utm_source=generator&amp;theme=0" width="100%" height="152" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
-    <p class="soundtrack-note">Open in Spotify to keep listening between pages.</p>
+    <div class="deck-display"><div class="deck-track"><span class="deck-side" id="deck-side">TRON / SIDE B</span><strong id="deck-track-name">OVERDRIVE</strong><span id="deck-artist">LAZERHAWK</span></div></div>
+    <div id="music-mount" class="music-mount"><iframe id="music-player" title="Audio player: Overdrive by Lazerhawk" width="100%" height="42" allow="autoplay" loading="eager"></iframe></div>
+    <div class="deck-transport"><span id="deck-status" class="deck-status" role="status">Plays across pages</span><button id="deck-reload" class="deck-reload" type="button" aria-label="Reload audio player" title="Reload audio player">↻</button><a id="deck-external" class="deck-eject" href="https://lazerhawk.bandcamp.com/track/overdrive" target="_blank" rel="noopener noreferrer" aria-label="Open Overdrive by Lazerhawk on Bandcamp">↗<span>Bandcamp</span></a></div>
   </aside>
-  <script type="module" src="/world.js?v=drive2"></script>
+  <script src="/navigation.js?v=continuous4" defer></script>
+  <script type="module" src="/world.js?v=continuous4"></script>
 </body>
 </html>

@@ -1,4 +1,10 @@
 /* Three real documents share one cinematic language. */
+:root { view-transition-name: none; }
+main { view-transition-name: page-content; }
+main:focus { outline: none; }
+.route-status { position:fixed; z-index:40; top:105px; left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100vw - 32px); padding:12px 18px; background:var(--bg); color:var(--text); border:1px solid var(--cyan); font-size:.875rem; }
+::view-transition-old(page-content) { animation: scene-out .45s both; }
+::view-transition-new(page-content) { animation: scene-in .75s cubic-bezier(.76,0,.24,1) both; }
 @view-transition { navigation: auto; }
 .site-header { view-transition-name: navigation; }
 #hero-title { view-transition-name: page-title; }

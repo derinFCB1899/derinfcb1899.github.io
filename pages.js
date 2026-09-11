@@ -2,10 +2,7 @@
   'use strict';
   const root = document.documentElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  function readPreference() {
-    try { root.dataset.motion = reduced.matches || localStorage.getItem('adc-motion') === 'paused' ? 'paused' : 'active'; }
-    catch { root.dataset.motion = reduced.matches ? 'paused' : 'active'; }
-  }
+  function readPreference() { root.dataset.motion = reduced.matches ? 'paused' : 'active'; }
   readPreference();
   const allowed = () => root.dataset.motion === 'active' && !reduced.matches && !document.hidden;
   // Registered in the head before the browser's first rendering opportunity.

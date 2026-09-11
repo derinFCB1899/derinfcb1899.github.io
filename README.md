@@ -16,11 +16,13 @@ GitHub Pages publishes the `main` branch from the repository root. No build step
 
 For local preview, run `python -m http.server 4173` from this directory and open http://localhost:4173/.
 
-The Three.js environments, page transitions, and text effects respect the saved motion preference and device reduced-motion setting. Content and navigation remain available without JavaScript.
+The Three.js environments, page transitions, and text effects respect the device's reduced-motion setting. The visible motion toggle has been removed. Content and navigation remain available without JavaScript. Pixel reveals fade smoothly over 1.6 seconds and clear immediately when their content receives focus.
 
-The Sunset/TRON control switches between a vivid retrowave sunset with 3D wedge cars and a near-black light-cycle arena with hovering 3D Recognizers. The floor grid, vehicle motion, light walls, and camera share a Three.js scene. The original floating abstract objects and moon have been removed. The selected theme is remembered across pages and visits.
+The Sunset/TRON control switches between a vivid retrowave sunset with three 3D car bodies (wedge, boxy, and targa) and a near-black light-cycle arena with hovering 3D Recognizers. The smaller cars occupy three grid-aligned highway lanes, with moving lane markings, and fade toward the sunset before wrapping their driving loop. Bikes face the Recognizers, hold steady lanes, and lean gently while their straight trails stay aligned with the grid. The floor grid, vehicles, light walls, and camera share a Three.js scene. The selected theme is remembered across pages and visits.
 
-The retro Soundtrack deck uses Spotify's official iFrame API for Kavinsky's “Zenith – Instrumental.” Play/Pause and the read-only playback clock/progress reflect Spotify events. The official player stays visible inside the open deck for account and playback controls. Spotify is contacted only when the deck is opened. API failure or timeout falls back to the ordinary embed. Minimizing keeps playback mounted; changing documents reloads it, so the Spotify link supports uninterrupted listening across pages. Playback availability depends on Spotify and the visitor's browser/account.
+The compact retro Soundtrack deck uses Bandcamp's official audio-only player, loaded only when opened. Sunset plays FM-84's “Arcade Summer” (track `2147282108`); TRON plays Lazerhawk's “Overdrive” (track `3056541004`). Controls and streams come directly from each artist's public embed; no music files are copied into this repository. Reload retries the current embed, and the artist link remains available if playback is unavailable. Switching themes loads the matching track, which the listener starts in the player.
+
+`navigation.js` fetches and replaces only the main content for About, Work, and Contact. The soundtrack iframe and WebGL canvas remain mounted, so playback continues when following site links or using Back/Forward. Each route remains a complete independently loadable document. Page titles, metadata, focus, scroll positions, navigation state, and effects update on route changes. Full browser reloads or leaving the site start a new document and reset playback.
 
 ## Third-party assets
 

@@ -3,9 +3,6 @@
   const root = document.documentElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const allowed = () => root.dataset.motion === 'active' && !reduced.matches && !document.hidden;
-  // Deferred independently of WebGL imports. Never cover already-painted content.
-  const alreadyPainted = performance.getEntriesByType?.('paint').some(entry => entry.name === 'first-contentful-paint');
-  if (!allowed() || alreadyPainted || root.dataset.nativeTransition === 'true') return;
     const animations = new Set();
     function animate(element, frames, options) {
       if (!allowed() || typeof element.animate !== 'function') return;
@@ -13,6 +10,9 @@
       animations.add(animation);
       animation.finished.then(() => animations.delete(animation), () => animations.delete(animation));
     }
+  function mount(route = false) {
+    const alreadyPainted = performance.getEntriesByType?.('paint').some(entry => entry.name === 'first-contentful-paint');
+    if (!allowed() || (!route && (alreadyPainted || root.dataset.nativeTransition === 'true'))) return;
     const title = document.querySelector('#hero-title');
     if (title && allowed()) {
       title.setAttribute('aria-label', [...title.children].map(line => line.textContent).join(' '));
@@ -35,11 +35,12 @@
         });
       });
     }
-    if (root.dataset.nativeTransition !== 'true') document.querySelectorAll('.route-shutter i').forEach((strip, index) => {
+    if (!route && root.dataset.nativeTransition !== 'true') document.querySelectorAll('.route-shutter i').forEach((strip, index) => {
       animate(strip, [{ transform: 'translateY(0)' }, { transform: 'translateY(-102%)' }], {
         duration: 650, delay: index * 32, easing: 'cubic-bezier(.76,0,.24,1)', fill: 'backwards'
       });
     });
+  }
     function sync() {
       animations.forEach(animation => {
         if (root.dataset.motion !== 'active' || reduced.matches) animation.cancel();
@@ -54,4 +55,7 @@
       if (event.viewTransition) { animations.forEach(animation => animation.cancel()); animations.clear(); }
     });
     window.addEventListener('pagehide', () => { animations.forEach(animation => animation.cancel()); animations.clear(); });
+    window.addEventListener('adc:pagebeforechange', () => { animations.forEach(animation => animation.cancel()); animations.clear(); });
+    window.addEventListener('adc:pagechange', () => mount(true));
+    mount();
 })();

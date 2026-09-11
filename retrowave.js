@@ -31,86 +31,47 @@
   const music = document.getElementById('soundtrack');
   const musicToggle = document.getElementById('soundtrack-toggle');
   const close = document.getElementById('soundtrack-close');
-  const frame = document.getElementById('spotify-player');
-  const mount = document.getElementById('spotify-mount');
-  const play = document.getElementById('deck-play');
-  const playLabel = document.getElementById('deck-play-label');
-  const playIcon = document.getElementById('deck-play-icon');
+  const frame = document.getElementById('music-player');
   const status = document.getElementById('deck-status');
-  const time = document.getElementById('deck-time');
-  const progress = document.getElementById('deck-progress');
-  let controller;
-  let connected = false;
-  let abandoned = false;
-  let readyTimer;
-  let requestTimer;
-  function fallback() {
-    clearTimeout(readyTimer);
-    abandoned = true;
-    controller = null;
-    play.disabled = true;
-    status.textContent = 'Use the Spotify player below';
-    if (mount.querySelector('iframe') !== frame) mount.replaceChildren(frame);
-    if (!frame.hasAttribute('src')) frame.src = frame.dataset.src;
+  const trackName = document.getElementById('deck-track-name');
+  const artist = document.getElementById('deck-artist');
+  const side = document.getElementById('deck-side');
+  const external = document.getElementById('deck-external');
+  const reload = document.getElementById('deck-reload');
+  const tracks = {
+    light: { id:'2147282108', name:'ARCADE SUMMER', artist:'FM-84', title:'Arcade Summer by FM-84', side:'SUNSET / SIDE A', url:'https://fm84.bandcamp.com/track/arcade-summer', color:'ffd379' },
+    dark: { id:'3056541004', name:'OVERDRIVE', artist:'LAZERHAWK', title:'Overdrive by Lazerhawk', side:'TRON / SIDE B', url:'https://lazerhawk.bandcamp.com/track/overdrive', color:'8cefff' }
+  };
+  let loadedTrack = null;
+  const selected = () => tracks[root.dataset.theme] || tracks.dark;
+  function loadTrack(force = false) {
+    const track = selected();
+    if (!force && loadedTrack === track.id) return;
+    loadedTrack = track.id;
+    status.textContent = 'Loading player…';
+    frame.title = 'Audio player: ' + track.title;
+    frame.src = 'https://bandcamp.com/EmbeddedPlayer/track=' + track.id + '/size=small/bgcol=07131b/linkcol=' + track.color + '/artwork=none/transparent=true/';
   }
-  function connect() {
-    if (connected) return;
-    connected = true;
-    status.textContent = 'Connecting to Spotify…';
-    window.onSpotifyIframeApiReady = api => {
-      if (abandoned) return;
-      try {
-        const target = document.createElement('div');
-        mount.replaceChildren(target);
-        api.createController(target, { uri: 'spotify:track:5qOYTOVY0bn48XIt6LTdQ3', width: '100%', height: 152 }, player => {
-          if (abandoned) return;
-          controller = player;
-          controller.addListener('ready', () => {
-            if (abandoned) return;
-            clearTimeout(readyTimer);
-            play.disabled = false;
-            status.textContent = 'Ready to play';
-          });
-          controller.addListener('playback_update', event => {
-            if (abandoned) return;
-            clearTimeout(requestTimer);
-            const data = event.data;
-            const position = Number.isFinite(data.position) ? Math.max(0, data.position) : 0;
-            const duration = Number.isFinite(data.duration) ? Math.max(0, data.duration) : 0;
-            const seconds = Math.floor(position / 1000);
-            time.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-            progress.value = duration ? Math.min(100, position / duration * 100) : 0;
-            playLabel.textContent = data.isPaused ? 'Play' : 'Pause';
-            playIcon.textContent = data.isPaused ? '▶' : 'Ⅱ';
-            const nextStatus = data.isBuffering ? 'Buffering…' : data.isPaused ? 'Paused' : 'Playing';
-            if (status.textContent !== nextStatus) status.textContent = nextStatus;
-          });
-        });
-      } catch { fallback(); }
-    };
-    const script = document.createElement('script');
-    script.src = 'https://open.spotify.com/embed/iframe-api/v1';
-    script.async = true;
-    script.onerror = fallback;
-    readyTimer = setTimeout(fallback, 15000);
-    document.head.append(script);
+  function syncTrack() {
+    const track = selected();
+    trackName.textContent = track.name;
+    artist.textContent = track.artist;
+    side.textContent = track.side;
+    external.href = track.url;
+    external.setAttribute('aria-label', 'Open ' + track.title + ' on Bandcamp');
+    frame.title = 'Audio player: ' + track.title;
+    if (loadedTrack) loadTrack();
   }
-  play.addEventListener('click', () => {
-    if (!controller || play.disabled) return;
-    try {
-      controller.togglePlay();
-      clearTimeout(requestTimer);
-      requestTimer = setTimeout(() => { status.textContent = 'Try Play in the Spotify player below'; }, 6000);
-    } catch { status.textContent = 'Use the Spotify player below'; }
-  });
+  frame.addEventListener('load', () => { if (loadedTrack) status.textContent = 'Plays across pages'; });
+  frame.addEventListener('error', () => { status.textContent = 'Try Reload or open on Bandcamp'; });
+  reload.addEventListener('click', () => loadTrack(true));
+  window.addEventListener('adc:themechange', syncTrack);
   function showMusic(open) {
     music.hidden = !open;
     musicToggle.setAttribute('aria-expanded', String(open));
-    // The official player is only contacted when the visitor opens it.
-    if (open) {
-      connect();
-    }
+    if (open) loadTrack();
   }
+  syncTrack();
   musicToggle.hidden = false;
   musicToggle.addEventListener('click', () => showMusic(music.hidden));
   close.addEventListener('click', () => { showMusic(false); musicToggle.focus(); });
