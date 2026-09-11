@@ -1,14 +1,11 @@
 (() => {
   'use strict';
   const root = document.documentElement;
-  const panel = document.getElementById('soundtrack');
   const muteButton = document.getElementById('music-mute');
-  const status = document.getElementById('deck-status');
-  const reload = document.getElementById('deck-reload');
-  const external = document.getElementById('deck-external');
   const tracks = {
     light: { provider:'soundcloud', id:'260809924', name:'ARCADE SUMMER', artist:'FM-84', title:'Arcade Summer by FM-84', side:'SUNSET / SIDE A', url:'https://soundcloud.com/fm84/arcade-summer-album', color:'c62c7d' },
-    dark: { provider:'youtube', id:'ciQS0urRMtI', name:'NIGHTCLUB', artist:'THE ABYSS', title:'Nightclub by The Abyss', side:'TRON / SIDE B', url:'https://www.youtube.com/watch?v=ciQS0urRMtI' }
+    // A direct, website-authorized audio source is needed for Nightclub.
+    dark: { provider:'none', id:'nightclub', title:'Nightclub by The Abyss', url:null }
   };
   const players = new Map();
   let track = null;
@@ -24,26 +21,15 @@
   const active = () => players.get(track?.provider);
 
   function render() {
-    const action = muted ? 'Unmute' : 'Mute';
-    muteButton.setAttribute('aria-label', action + ' soundtrack');
-    muteButton.title = action + ' soundtrack';
-    muteButton.setAttribute('aria-pressed', String(muted));
-    muteButton.dataset.state = muted ? 'muted' : phase;
-    panel.hidden = muted || (track.provider === 'soundcloud' && !['blocked', 'error'].includes(phase));
-    document.getElementById('deck-transport').hidden = !['loading', 'blocked', 'error'].includes(phase);
-    status.textContent = muted ? 'Sound muted' : ({ loading:'Loading audio…', starting:'Starting audio…', playing:'Playing · follows your theme', blocked:'Press Play to enable audio', paused:'Audio paused', error:'Audio unavailable · try Reload' })[phase];
+    const available = Boolean(track.url);
+    const action = !available ? 'Sound unavailable' : muted ? 'Unmute soundtrack' : phase === 'error' ? 'Retry soundtrack' : phase === 'blocked' ? 'Enable sound' : 'Mute soundtrack';
+    muteButton.setAttribute('aria-label', action);
+    muteButton.title = action + ' · ' + track.title;
+    muteButton.setAttribute('aria-pressed', String(muted || !available));
+    muteButton.dataset.state = !available ? 'unavailable' : muted ? 'muted' : phase;
+    muteButton.disabled = !available;
   }
-  function visibleForPlayback() {
-    if (document.hidden) return false;
-    if (track.provider !== 'youtube') return true;
-    const frame = document.getElementById('music-youtube');
-    if (!frame || panel.hidden) return false;
-    const r = frame.getBoundingClientRect();
-    const p = panel.getBoundingClientRect();
-    const width = Math.max(0, Math.min(r.right, p.right, innerWidth) - Math.max(r.left, p.left, 0));
-    const height = Math.max(0, Math.min(r.bottom, p.bottom, innerHeight) - Math.max(r.top, p.top, 0));
-    return r.width >= 200 && r.height >= 200 && width * height > r.width * r.height / 2;
-  }
+  function visibleForPlayback() { return !document.hidden; }
   function play() {
     const player = active();
     if (!player?.ready || muted || !visibleForPlayback()) return;
@@ -103,6 +89,7 @@
     }
   }
   function ensurePlayer() {
+    if (!track.url) return;
     const provider = track.provider;
     let player = active();
     if (!player) {
@@ -129,14 +116,7 @@
     needsGesture = true;
     resumeVisible = false;
     phase = 'loading';
-    panel.dataset.provider = track.provider;
-    document.getElementById('soundcloud-mount').hidden = track.provider !== 'soundcloud';
-    document.getElementById('youtube-mount').hidden = track.provider !== 'youtube';
-    panel.setAttribute('aria-label', track.title);
-    const providerName = track.provider === 'youtube' ? 'YouTube' : 'SoundCloud';
-    external.href = track.url;
-    external.querySelector('span').textContent = providerName;
-    external.setAttribute('aria-label', 'Open ' + track.title + ' on ' + providerName);
+    if (!track.url) { phase = 'unavailable'; render(); return; }
     render();
     ensurePlayer();
     if (active().ready) { phase = 'paused'; play(); }
@@ -166,10 +146,14 @@
     else { ensurePlayer(); play(); }
     render();
   }
-  muteButton.addEventListener('click', () => setMuted(!muted));
-  reload.addEventListener('click', retry);
+  muteButton.addEventListener('click', () => {
+    if (!track.url) return;
+    if (!muted && phase === 'error') retry();
+    else if (!muted && phase === 'blocked') play();
+    else setMuted(!muted);
+  });
   function unlock(event) {
-    if (!event.isTrusted || muted || !needsGesture || event.target.closest('#music-mute, #theme-toggle, #deck-reload')) return;
+    if (!event.isTrusted || muted || !needsGesture || event.target.closest('#music-mute, #theme-toggle')) return;
     if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return;
     play();
   }
@@ -183,15 +167,7 @@
       active()?.pause();
     } else if ((resumeVisible || needsGesture) && !muted) { resumeVisible = false; play(); }
   });
-  function checkVisibility() {
-    if (muted || track.provider !== 'youtube') return;
-    if (!visibleForPlayback()) {
-      if (phase === 'playing' || phase === 'starting') { resumeVisible = true; active()?.pause(); }
-    } else if (resumeVisible || needsGesture) { resumeVisible = false; play(); }
-  }
-  window.addEventListener('resize', checkVisibility);
-  panel.addEventListener('scroll', checkVisibility, {passive:true});
-  // Page navigation replaces only <main>; both providers retain their playback position.
+  // Page navigation replaces only <main>; the audio iframe retains its playback position.
   muteButton.hidden = false;
   syncTrack();
 })();
