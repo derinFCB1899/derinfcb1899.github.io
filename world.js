@@ -10,7 +10,7 @@ const hint = document.querySelector('.world-hint');
 let renderer;
 
 try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'low-power' });
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
 } catch {
   root.dataset.world = 'fallback';
 }
@@ -19,7 +19,7 @@ if (renderer) startWorld(renderer);
 
 function startWorld(renderer) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#03060d');
+  scene.background = null;
   scene.fog = new THREE.FogExp2('#03060d', .012);
   const camera = new THREE.PerspectiveCamera(54, 1, .1, 310);
   camera.position.set(0, 1, 24);
@@ -131,7 +131,8 @@ function startWorld(renderer) {
 
   // Each document has a distinct silhouette, all sharing the same small renderer.
   const sculpture = new THREE.Group();
-  sculpture.position.set(0, .2, 1);
+  sculpture.position.set(5, -5, -18);
+  sculpture.scale.setScalar(.72);
   scene.add(sculpture);
   const orbitRings = [];
   const pulseRings = [];
@@ -190,6 +191,44 @@ function startWorld(renderer) {
   packets.frustumCulled = false;
   scene.add(packets);
 
+  const rails = new THREE.Group();
+  const railGeometry = new THREE.BoxGeometry(.025, .025, 220);
+  const railMaterial = lightMaterial('#52dfff', .6);
+  for (const x of [-8,-4,4,8]) {
+    const rail = new THREE.Mesh(railGeometry,railMaterial);
+    rail.position.set(x,-5,-105);
+    rails.add(rail);
+  }
+  scene.add(rails);
+
+  function setTheme() {
+    const light = root.dataset.theme === 'light';
+    scene.fog.color.set(light ? '#dfeaff' : '#160e2e');
+    scene.fog.density = light ? .008 : .012;
+    cyan.set(light ? '#007d9f' : '#40dfff');
+    pink.set(light ? '#a33e9e' : '#f15be0');
+    floor.material.opacity = light ? .7 : .5;
+    ceiling.visible = page === 'work' && !light;
+    scene.traverse(object => {
+      const material = object.material;
+      if (!material) return;
+      if (material.userData.nightBlending === undefined) {
+        material.userData.nightBlending = material.blending;
+        if (material.color) material.userData.nightColor = material.color.clone();
+      }
+      material.blending = light ? THREE.NormalBlending : material.userData.nightBlending;
+      if (material.color) material.color.copy(material.userData.nightColor).multiplyScalar(light ? .36 : 1);
+      material.needsUpdate = true;
+    });
+    stars.material.color.set(light ? '#517ab6' : '#bddaff');
+    stars.material.opacity = light ? .4 : .75;
+    packets.material.color.copy(cyan);
+    railMaterial.color.copy(cyan);
+    setChapter();
+    accent.copy(nextAccent);
+    if (!shouldRun() && !document.hidden) renderStill();
+  }
+
   function motionAllowed() {
     return !reduced.matches && root.dataset.motion === 'active';
   }
@@ -199,8 +238,9 @@ function startWorld(renderer) {
   function setChapter() {
     const current = root.dataset.page || root.dataset.chapter || 'about';
     chapterTarget = ({ home: 0, work: 1, about: 2, contact: 3 })[current] ?? 0;
-    nextAccent.set(chapterTarget >= 2 ? '#a678ff' : '#29cfff');
-    if (chapterTarget === 3) nextAccent.set('#e666db');
+    const light = root.dataset.theme === 'light';
+    nextAccent.set(chapterTarget >= 2 ? (light ? '#8053b5' : '#b791ff') : (light ? '#087eab' : '#40dfff'));
+    if (chapterTarget === 3) nextAccent.set(light ? '#a94591' : '#ee87dc');
   }
   function size() {
     if (disposed || failed || contextLost) return;
@@ -249,7 +289,7 @@ function startWorld(renderer) {
     stars.rotation.z = Math.sin(elapsed * .045) * .02;
     stars.position.z = wrap(elapsed * .25, 10);
     sculpture.rotation.set(pointer.y * -.07, pointer.x * .10 + Math.sin(elapsed * .17) * .07, 0);
-    sculpture.position.y = .2 + Math.sin(elapsed * .55) * .25;
+    sculpture.position.y = -5 + Math.sin(elapsed * .55) * .25;
     if (core) core.rotation.set(.3 + elapsed * .055, .35 + elapsed * .10 + scrollPosition * .0003, .1);
     orbitRings.forEach((orbit, i) => {
       orbit.rotation.z = i * 1.4 + elapsed * (i % 2 ? -.16 : .13);
@@ -353,6 +393,7 @@ function startWorld(renderer) {
     window.removeEventListener('resize', size);
     window.removeEventListener('adc:motionchange', onMotion);
     window.removeEventListener('adc:chapterchange', setChapter);
+    window.removeEventListener('adc:themechange', setTheme);
     document.removeEventListener('visibilitychange', sync);
     reduced.removeEventListener('change', onMotion);
     finePointer.removeEventListener('change', sync);
@@ -373,6 +414,7 @@ function startWorld(renderer) {
   window.addEventListener('resize', size, { passive: true });
   window.addEventListener('adc:motionchange', onMotion);
   window.addEventListener('adc:chapterchange', setChapter);
+  window.addEventListener('adc:themechange', setTheme);
   document.addEventListener('visibilitychange', sync);
   reduced.addEventListener('change', onMotion);
   finePointer.addEventListener('change', sync);
@@ -382,7 +424,7 @@ function startWorld(renderer) {
   window.addEventListener('pageshow', () => { pageCached = false; sync(); });
   const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(size) : null;
   resizeObserver?.observe(canvas);
-  setChapter();
+  setTheme();
   size();
   renderStill();
   if (!failed) root.dataset.world = 'ready';
