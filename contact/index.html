@@ -17,11 +17,12 @@
   <link rel="stylesheet" href="/pages.css?v=continuous4">
   <link rel="stylesheet" href="/header.css">
   <link rel="stylesheet" href="/retrowave.css?v=continuous4">
-  <link rel="stylesheet" href="/driving.css?v=continuous4">
+  <link rel="stylesheet" href="/driving.css?v=autoplay5">
   <script src="/pages.js?v=continuous4"></script>
   <script src="/entrance.js?v=continuous4" defer></script>
   <script src="/glitch.js?v=continuous4" defer></script>
-  <script src="/retrowave.js?v=continuous4" defer></script>
+  <script src="/retrowave.js?v=autoplay5" defer></script>
+  <script src="/soundtrack.js?v=autoplay5" defer></script>
 </head>
 <body>
   <div class="route-shutter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -51,12 +52,15 @@
     </section>
 </main>
   <footer class="wrap"><span>© 2026 Ahmet Derin Cabuk</span><div class="footer-controls"><a href="#">Back to top ↑</a></div></footer>
-  <button id="soundtrack-toggle" class="soundtrack-toggle" type="button" aria-controls="soundtrack" aria-expanded="false" hidden><span class="soundtrack-glyph" aria-hidden="true">▰</span> Soundtrack</button>
+  <div class="soundtrack-controls">
+    <button id="soundtrack-toggle" class="soundtrack-toggle" type="button" aria-controls="soundtrack" aria-expanded="false" hidden><span class="soundtrack-glyph" aria-hidden="true">▰</span> Soundtrack</button>
+    <button id="music-mute" class="music-mute" type="button" aria-label="Mute soundtrack" hidden><span class="music-state-icon" aria-hidden="true">♫</span><span id="music-mute-label">Mute</span></button>
+  </div>
   <aside id="soundtrack" class="soundtrack" aria-labelledby="soundtrack-title" hidden>
     <div class="soundtrack-heading"><h2 id="soundtrack-title">Soundtrack</h2><span class="deck-edition" aria-hidden="true">ADC / TAPE 01</span><button class="soundtrack-close" id="soundtrack-close" type="button" aria-label="Minimize soundtrack player">−</button></div>
     <div class="deck-display"><div class="deck-track"><span class="deck-side" id="deck-side">TRON / SIDE B</span><strong id="deck-track-name">OVERDRIVE</strong><span id="deck-artist">LAZERHAWK</span></div></div>
-    <div id="music-mount" class="music-mount"><iframe id="music-player" title="Audio player: Overdrive by Lazerhawk" width="100%" height="42" allow="autoplay" loading="eager"></iframe></div>
-    <div class="deck-transport"><span id="deck-status" class="deck-status" role="status">Plays across pages</span><button id="deck-reload" class="deck-reload" type="button" aria-label="Reload audio player" title="Reload audio player">↻</button><a id="deck-external" class="deck-eject" href="https://lazerhawk.bandcamp.com/track/overdrive" target="_blank" rel="noopener noreferrer" aria-label="Open Overdrive by Lazerhawk on Bandcamp">↗<span>Bandcamp</span></a></div>
+    <div id="music-mount" class="music-mount"><iframe id="music-player" title="Audio player: Overdrive by Lazerhawk" width="100%" height="166" allow="autoplay" loading="eager"></iframe></div>
+    <div class="deck-transport"><span id="deck-status" class="deck-status" role="status">Loading audio…</span><button id="deck-reload" class="deck-reload" type="button" aria-label="Reload audio player" title="Reload audio player">↻</button><a id="deck-external" class="deck-eject" href="https://soundcloud.com/lazerhawk/lazerhawk-overdrive" target="_blank" rel="noopener noreferrer" aria-label="Open Overdrive by Lazerhawk on SoundCloud">↗<span>SoundCloud</span></a></div>
   </aside>
   <script src="/navigation.js?v=continuous4" defer></script>
   <script type="module" src="/world.js?v=continuous4"></script>
