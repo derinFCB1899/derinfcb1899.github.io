@@ -4,8 +4,7 @@
   const muteButton = document.getElementById('music-mute');
   const tracks = {
     light: { provider:'soundcloud', id:'260809924', name:'ARCADE SUMMER', artist:'FM-84', title:'Arcade Summer by FM-84', side:'SUNSET / SIDE A', url:'https://soundcloud.com/fm84/arcade-summer-album', color:'c62c7d' },
-    // A direct, website-authorized audio source is needed for Nightclub.
-    dark: { provider:'none', id:'nightclub', title:'Nightclub by The Abyss', url:null }
+    dark: { provider:'soundcloud', id:'916461929', title:'Genesis by JNATHYN', url:'https://soundcloud.com/jnathyn/genesis', color:'24bad5' }
   };
   const players = new Map();
   let track = null;
@@ -18,7 +17,7 @@
   let playCheck = 0;
   let loadCheck = 0;
   let resumeVisible = false;
-  const active = () => players.get(track?.provider);
+  const active = () => players.get(track?.id);
 
   function render() {
     const available = Boolean(track.url);
@@ -48,9 +47,9 @@
       render();
     }), 2200);
   }
-  function onEvent(provider, player, type) {
-    if (players.get(provider) !== player) return;
-    if (provider !== track.provider) {
+  function onEvent(trackId, player, type) {
+    if (players.get(trackId) !== player) return;
+    if (trackId !== track.id) {
       if (type === 'ready' || type === 'playing') { player.volume(true); player.pause(); }
       return;
     }
@@ -90,11 +89,12 @@
   }
   function ensurePlayer() {
     if (!track.url) return;
-    const provider = track.provider;
+    const trackId = track.id;
     let player = active();
+    if (player?.failed) { players.delete(trackId); player.destroy(); player = null; }
     if (!player) {
-      player = window.createSoundtrackPlayer(track, type => onEvent(provider, player, type));
-      players.set(provider, player);
+      player = window.createSoundtrackPlayer(track, type => onEvent(trackId, player, type));
+      players.set(trackId, player);
     }
     if (player.ready) return;
     clearTimeout(loadCheck);
@@ -127,7 +127,7 @@
     clearTimeout(playCheck);
     clearTimeout(loadCheck);
     const old = active();
-    players.delete(track.provider);
+    players.delete(track.id);
     old?.destroy();
     phase = 'loading';
     needsGesture = true;
@@ -167,7 +167,7 @@
       active()?.pause();
     } else if ((resumeVisible || needsGesture) && !muted) { resumeVisible = false; play(); }
   });
-  // Page navigation replaces only <main>; the audio iframe retains its playback position.
+  // Page navigation replaces only <main>; both audio iframes retain their playback position.
   muteButton.hidden = false;
   syncTrack();
 })();
