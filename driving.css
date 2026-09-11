@@ -16,3 +16,8 @@ html[data-theme='light'] .button-quiet { color:#50193e; }
 @media(max-width:380px) { .header-inner { gap:10px; } .header-socials { gap:4px; } .brand { gap:2px; font-size:1.125rem; } .brand-bracket { font-size:1.45rem; } }
 
 .music-mute:disabled { cursor:default; opacity:.6; box-shadow:none; }
+
+.footer-info { min-width:0; }
+.music-credits { margin-top:6px; font-size:.875rem; line-height:1.7; color:var(--muted); }
+.music-credits a { text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px; }
+.music-credits a:hover { color:var(--cyan); text-decoration-color:currentColor; }
