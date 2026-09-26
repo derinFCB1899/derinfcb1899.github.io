@@ -20,11 +20,15 @@ html[data-theme='light'] .button-quiet { color:#50193e; }
 @media(max-width:520px) {
   .world { --sun-x:calc(100% - clamp(75px,21vw,100px) - 4px); --sun-y:clamp(205px,calc(30svh - 20px),260px); }
   .celestial { width:clamp(150px,42vw,200px); }
-  html[data-theme='light'] .world { --sun-x:50%; --sun-y:calc(50svh - clamp(70px,20vw,110px) + 10px); }
+  html[data-theme='light'] .world { --sun-x:50%; --sun-y:calc(50svh - clamp(70px,20vw,110px) + 22px); }
   html[data-theme='light'] .celestial { width:clamp(140px,40vw,220px); }
+  html[data-theme='light'][data-motion='active'] .celestial { animation:none; }
   html[data-theme='light'] .hero .hero-content { justify-content:flex-start; padding-top:18px; }
   html[data-theme='light'] .hero h1 { margin:8px 0 0; }
-  html[data-theme='light'] .hero .hero-description { margin-top:clamp(140px,20svh,170px); }
+  html[data-theme='light'] .hero .hero-description { margin-top:max(0px,calc(50svh - 230px)); }
+  html[data-theme='light'] .hero-about .hero-actions { margin-top:max(40px,calc(30svh - 117px)); }
+  html[data-theme='light'] .hero-work .hero-actions { margin-top:max(40px,calc(30svh - 90px)); }
+  html[data-theme='light'] .hero-contact .contact-direct { margin-top:max(40px,calc(30svh - 117px)); }
 }
 @media(max-width:380px) { .header-inner { gap:10px; } .header-socials { gap:4px; } .brand { gap:2px; font-size:1.125rem; } .brand-bracket { font-size:1.45rem; } }
 
