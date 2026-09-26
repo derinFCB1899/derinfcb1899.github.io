@@ -1,15 +1,15 @@
 @media (hover: hover) and (pointer: fine) {
-  html, body, body * { cursor: url('/assets/cursor-tron.svg?v=1') 3 2, auto; }
+  html, body, body * { cursor: url('/assets/cursor-tron.svg?v=3') 3 2, auto !important; }
   html[data-theme='light'], html[data-theme='light'] body, html[data-theme='light'] body * {
-    cursor: url('/assets/cursor-sunset.svg?v=1') 3 2, auto;
+    cursor: url('/assets/cursor-sunset.svg?v=3') 3 2, auto !important;
   }
   a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, [role='button'] {
-    cursor: url('/assets/cursor-tron.svg?v=1') 3 2, pointer;
+    cursor: url('/assets/cursor-tron.svg?v=3') 3 2, pointer !important;
   }
   html[data-theme='light'] a[href], html[data-theme='light'] button:not(:disabled),
   html[data-theme='light'] input:not(:disabled), html[data-theme='light'] select:not(:disabled),
   html[data-theme='light'] summary, html[data-theme='light'] [role='button'] {
-    cursor: url('/assets/cursor-sunset.svg?v=1') 3 2, pointer;
+    cursor: url('/assets/cursor-sunset.svg?v=3') 3 2, pointer !important;
   }
   button:disabled { cursor: not-allowed; }
 }
