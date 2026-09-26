@@ -21,9 +21,9 @@
 
   function render() {
     const available = Boolean(track.url);
-    const action = !available ? 'Sound unavailable' : muted ? 'Unmute soundtrack' : phase === 'error' ? 'Retry soundtrack' : phase === 'blocked' ? 'Enable sound' : 'Mute soundtrack';
+    const action = !available ? 'Sound unavailable' : muted ? 'Unmute audio' : phase === 'error' ? 'Retry audio' : phase === 'blocked' ? 'Enable audio' : 'Mute audio';
     muteButton.setAttribute('aria-label', action);
-    muteButton.title = action + ' · ' + track.title;
+    muteButton.title = action;
     muteButton.setAttribute('aria-pressed', String(muted || !available));
     muteButton.dataset.state = !available ? 'unavailable' : muted ? 'muted' : phase;
     muteButton.disabled = !available;
