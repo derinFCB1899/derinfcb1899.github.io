@@ -1,7 +1,9 @@
 /* Sunset and TRON surfaces, with one header sound control. */
 .world-shade { z-index:3; }
 .world::after { z-index:4; }
-html[data-theme='light'] .world { background:radial-gradient(ellipse at 72% 35%,#ffe076bb,transparent 36%),linear-gradient(180deg,#ffb348 0%,#ff9363 24%,#ff6991 46%,#e33b99 66%,#823698 82%,#ffc493 100%); }
+.world { --sun-x:72%; --sun-y:clamp(270px,38svh,420px); }
+.celestial { left:var(--sun-x); top:var(--sun-y); }
+html[data-theme='light'] .world { background:radial-gradient(ellipse at var(--sun-x) var(--sun-y),#ffe076bb,transparent 36%),linear-gradient(180deg,#ffb348 0%,#ff9363 24%,#ff6991 46%,#e33b99 66%,#823698 82%,#ffc493 100%); }
 html[data-theme='light'] .hero::after { background:linear-gradient(0deg,var(--bg),transparent 18%); }
 html[data-theme='light'] .celestial-sun { filter:saturate(1.25); }
 html[data-theme='light'] .button-quiet { color:#50193e; }
@@ -11,8 +13,14 @@ html[data-theme='light'] .button-quiet { color:#50193e; }
 .music-mute[data-state='muted'],.music-mute[data-state='unavailable'] { color:var(--muted); border-color:var(--line); }
 .music-mute .sound-off,.music-mute[data-state='muted'] .sound-waves,.music-mute[data-state='unavailable'] .sound-waves { display:none; }
 .music-mute[data-state='muted'] .sound-off,.music-mute[data-state='unavailable'] .sound-off { display:block; }
-@media(max-width:800px) { .celestial { top:320px; } }
-@media(max-width:520px) { .celestial { top:300px; } }
+@media(max-width:800px) {
+  .world { --sun-x:calc(57.1vw + 119px); --sun-y:clamp(205px,calc(30svh + 28vw - 166px),420px); }
+  .celestial { width:clamp(200px,calc(49vw - 55px),390px); opacity:.7; }
+}
+@media(max-width:520px) {
+  .world { --sun-x:calc(100% - clamp(75px,21vw,100px) - 4px); --sun-y:clamp(205px,calc(30svh - 20px),260px); }
+  .celestial { width:clamp(150px,42vw,200px); }
+}
 @media(max-width:380px) { .header-inner { gap:10px; } .header-socials { gap:4px; } .brand { gap:2px; font-size:1.125rem; } .brand-bracket { font-size:1.45rem; } }
 
 .music-mute:disabled { cursor:default; opacity:.6; box-shadow:none; }
