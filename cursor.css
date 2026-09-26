@@ -1,15 +1,14 @@
-@media (hover: hover) and (pointer: fine) {
-  html, body, body * { cursor: url('/assets/cursor-tron.svg?v=4') 5 1, auto !important; }
+@media (any-hover: hover) and (any-pointer: fine) {
+  html, body, body * { cursor: url('/assets/cursor-tron.png?v=1') 5 2, auto !important; }
   html[data-theme='light'], html[data-theme='light'] body, html[data-theme='light'] body * {
-    cursor: url('/assets/cursor-sunset.svg?v=4') 5 1, auto !important;
+    cursor: url('/assets/cursor-sunset.png?v=1') 5 2, auto !important;
   }
   a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, [role='button'] {
-    cursor: url('/assets/cursor-tron.svg?v=4') 5 1, pointer !important;
+    cursor: url('/assets/cursor-tron.png?v=1') 5 2, pointer !important;
   }
   html[data-theme='light'] a[href], html[data-theme='light'] button:not(:disabled),
   html[data-theme='light'] input:not(:disabled), html[data-theme='light'] select:not(:disabled),
   html[data-theme='light'] summary, html[data-theme='light'] [role='button'] {
-    cursor: url('/assets/cursor-sunset.svg?v=4') 5 1, pointer !important;
+    cursor: url('/assets/cursor-sunset.png?v=1') 5 2, pointer !important;
   }
-  button:disabled { cursor: not-allowed; }
 }
