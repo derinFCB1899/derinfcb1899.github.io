@@ -20,8 +20,10 @@ html[data-theme='light'] .button-quiet { color:#50193e; }
 @media(max-width:520px) {
   .world { --sun-x:calc(100% - clamp(75px,21vw,100px) - 4px); --sun-y:clamp(205px,calc(30svh - 20px),260px); }
   .celestial { width:clamp(150px,42vw,200px); }
-  html[data-theme='light'] .world { --sun-x:50%; --sun-y:calc(50svh - clamp(70px,20vw,110px) + 22px); }
+  html[data-theme='light'] .world { --sun-x:62%; --sun-y:calc(50svh - clamp(70px,20vw,110px) + 22px); }
   html[data-theme='light'] .celestial { width:clamp(140px,40vw,220px); }
+  html[data-theme='light'][data-world='ready'] .world { --sun-x:var(--scene-sun-x); --sun-y:var(--scene-sun-y); }
+  html[data-theme='light'][data-world='ready'] .celestial { width:var(--scene-sun-size); }
   html[data-theme='light'][data-motion='active'] .celestial { animation:none; }
   html[data-theme='light'] .hero .hero-content { justify-content:flex-start; padding-top:18px; }
   html[data-theme='light'] .hero h1 { margin:8px 0 0; }

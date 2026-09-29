@@ -31,6 +31,11 @@ function startWorld(renderer) {
 
   const pointer = new THREE.Vector2();
   const lookAt = new THREE.Vector3();
+  const sunAnchor = new THREE.Vector3();
+  const sunLeft = new THREE.Vector3();
+  const sunRight = new THREE.Vector3();
+  const world = canvas.parentElement;
+  let lastSunProjection = '';
   const cyan = new THREE.Color('#29cfff');
   const pink = new THREE.Color('#df43ff');
   const nextAccent = cyan.clone();
@@ -171,6 +176,7 @@ function startWorld(renderer) {
     lookAt.set(pointer.x * .2, -.7 + pointer.y * .12, -70);
     camera.lookAt(lookAt);
     camera.rotation.z = pointer.x * -.005;
+    syncSunProjection();
     accent.lerp(nextAccent, 1 - Math.exp(-dt * 1.5));
 
     const light = root.dataset.theme === 'light';
@@ -190,6 +196,28 @@ function startWorld(renderer) {
     }
     packetGeometry.attributes.position.needsUpdate = true;
     traffic.update(elapsed, compact);
+  }
+  function syncSunProjection() {
+    if (!width || !height || width > 520) return;
+    camera.updateMatrixWorld();
+    // The mobile sun meets the far end of the center lane. Project its world
+    // width with the same camera as the cars, including the off-center view.
+    sunAnchor.set(0, -5.05, -265).project(camera);
+    sunLeft.set(-27, -5.05, -265).project(camera);
+    sunRight.set(27, -5.05, -265).project(camera);
+    const diameter = (sunRight.x - sunLeft.x) * width / 2;
+    const x = (sunAnchor.x + 1) * width / 2;
+    const horizon = (1 - sunAnchor.y) * height / 2;
+    // The WebP includes transparent padding; its visible lower edge is at
+    // pixel 1112 of 1254. Anchor that edge, rather than the image box.
+    const y = horizon - diameter * (1112 / 1254 - .5);
+    const values = [x, y, diameter].map(value => value.toFixed(2));
+    const projection = values.join(',');
+    if (projection === lastSunProjection) return;
+    lastSunProjection = projection;
+    ['--scene-sun-x', '--scene-sun-y', '--scene-sun-size'].forEach((name, i) => {
+      world.style.setProperty(name, `${values[i]}px`);
+    });
   }
   function draw() {
     if (failed || disposed || contextLost) return;
