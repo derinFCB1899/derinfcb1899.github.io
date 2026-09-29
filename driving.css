@@ -3,7 +3,11 @@
 .world::after { z-index:4; }
 .world { --sun-x:72%; --sun-y:clamp(270px,38svh,420px); }
 .celestial { left:var(--sun-x); top:var(--sun-y); }
-html[data-theme='light'] .world { background:radial-gradient(ellipse at var(--sun-x) var(--sun-y),#ffe076bb,transparent 36%),linear-gradient(180deg,#ffb348 0%,#ff9363 24%,#ff6991 46%,#e33b99 66%,#823698 82%,#ffc493 100%); }
+html[data-theme='light'] .world { background:radial-gradient(ellipse at var(--sky-glow-x,var(--sun-x)) var(--sky-glow-y,var(--sun-y)),#ffe076bb,transparent 36%),linear-gradient(180deg,#ffb348 0%,#ff9363 24%,#ff6991 46%,#e33b99 66%,#823698 82%,#ffc493 100%); }
+html[data-theme='light'][data-world='ready'] .world { --sun-x:var(--scene-sun-x); --sun-y:var(--scene-sun-y); --sky-glow-x:72%; --sky-glow-y:38%; background-size:var(--scene-width) var(--scene-height); background-position:var(--scene-left) var(--scene-top); background-repeat:no-repeat; }
+html[data-theme='light'][data-world='ready'] .celestial { width:var(--scene-sun-size); opacity:1; }
+html[data-theme='light'][data-motion='active'][data-world='ready'] .celestial { animation:scene-sun-float 15s ease-in-out infinite alternate; }
+@keyframes scene-sun-float { from { translate:0 calc(-5px * var(--scene-scale,1)); } to { translate:0 calc(12px * var(--scene-scale,1)); } }
 html[data-theme='light'] .hero::after { background:linear-gradient(0deg,var(--bg),transparent 18%); }
 html[data-theme='light'] .celestial-sun { filter:saturate(1.25); }
 html[data-theme='light'] .button-quiet { color:#50193e; }
@@ -20,17 +24,11 @@ html[data-theme='light'] .button-quiet { color:#50193e; }
 @media(max-width:520px) {
   .world { --sun-x:calc(100% - clamp(75px,21vw,100px) - 4px); --sun-y:clamp(205px,calc(30svh - 20px),260px); }
   .celestial { width:clamp(150px,42vw,200px); }
-  html[data-theme='light'] .world { --sun-x:62%; --sun-y:calc(50svh - clamp(70px,20vw,110px) + 22px); }
-  html[data-theme='light'] .celestial { width:clamp(140px,40vw,220px); }
-  html[data-theme='light'][data-world='ready'] .world { --sun-x:var(--scene-sun-x); --sun-y:var(--scene-sun-y); }
-  html[data-theme='light'][data-world='ready'] .celestial { width:var(--scene-sun-size); }
-  html[data-theme='light'][data-motion='active'] .celestial { animation:none; }
   html[data-theme='light'] .hero .hero-content { justify-content:flex-start; padding-top:18px; }
   html[data-theme='light'] .hero h1 { margin:8px 0 0; }
-  html[data-theme='light'] .hero .hero-description { margin-top:max(0px,calc(50svh - 230px)); }
-  html[data-theme='light'] .hero-about .hero-actions { margin-top:max(40px,calc(30svh - 117px)); }
-  html[data-theme='light'] .hero-work .hero-actions { margin-top:max(40px,calc(30svh - 90px)); }
-  html[data-theme='light'] .hero-contact .contact-direct { margin-top:max(40px,calc(30svh - 117px)); }
+  html[data-theme='light'] .hero .hero-description { margin-top:max(0px,calc(80svh - 265px)); }
+  html[data-theme='light'] .hero .hero-actions { margin-top:25px; }
+  html[data-theme='light'] .hero-contact .contact-direct { margin-top:22px; }
 }
 @media(max-width:380px) { .header-inner { gap:10px; } .header-socials { gap:4px; } .brand { gap:2px; font-size:1.125rem; } .brand-bracket { font-size:1.45rem; } }
 

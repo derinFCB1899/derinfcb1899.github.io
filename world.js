@@ -31,11 +31,7 @@ function startWorld(renderer) {
 
   const pointer = new THREE.Vector2();
   const lookAt = new THREE.Vector3();
-  const sunAnchor = new THREE.Vector3();
-  const sunLeft = new THREE.Vector3();
-  const sunRight = new THREE.Vector3();
   const world = canvas.parentElement;
-  let lastSunProjection = '';
   const cyan = new THREE.Color('#29cfff');
   const pink = new THREE.Color('#df43ff');
   const nextAccent = cyan.clone();
@@ -126,6 +122,7 @@ function startWorld(renderer) {
     packets.material.color.copy(cyan);
     railMaterial.color.set(light ? '#faac48' : '#50eaff');
     rails.visible = roadDashes.visible = light;
+    frameScene();
     setChapter();
     accent.copy(nextAccent);
     if (!shouldRun() && !document.hidden) renderStill();
@@ -155,9 +152,7 @@ function startWorld(renderer) {
     pixelRatio = ratio;
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.setViewOffset(width, height, -width * (compact ? .12 : .2), 0, width, height);
-    camera.updateProjectionMatrix();
+    frameScene();
     starGeometry.setDrawRange(0, compact ? 100 : 240);
     packetGeometry.setDrawRange(0, compact ? 28 : 52);
     if (!shouldRun()) renderStill();
@@ -176,7 +171,6 @@ function startWorld(renderer) {
     lookAt.set(pointer.x * .2, -.7 + pointer.y * .12, -70);
     camera.lookAt(lookAt);
     camera.rotation.z = pointer.x * -.005;
-    syncSunProjection();
     accent.lerp(nextAccent, 1 - Math.exp(-dt * 1.5));
 
     const light = root.dataset.theme === 'light';
@@ -197,27 +191,38 @@ function startWorld(renderer) {
     packetGeometry.attributes.position.needsUpdate = true;
     traffic.update(elapsed, compact);
   }
-  function syncSunProjection() {
-    if (!width || !height || width > 520) return;
-    camera.updateMatrixWorld();
-    // The mobile sun meets the far end of the center lane. Project its world
-    // width with the same camera as the cars, including the off-center view.
-    sunAnchor.set(0, -5.05, -265).project(camera);
-    sunLeft.set(-27, -5.05, -265).project(camera);
-    sunRight.set(27, -5.05, -265).project(camera);
-    const diameter = (sunRight.x - sunLeft.x) * width / 2;
-    const x = (sunAnchor.x + 1) * width / 2;
-    const horizon = (1 - sunAnchor.y) * height / 2;
-    // The WebP includes transparent padding; its visible lower edge is at
-    // pixel 1112 of 1254. Anchor that edge, rather than the image box.
-    const y = horizon - diameter * (1112 / 1254 - .5);
-    const values = [x, y, diameter].map(value => value.toFixed(2));
-    const projection = values.join(',');
-    if (projection === lastSunProjection) return;
-    lastSunProjection = projection;
-    ['--scene-sun-x', '--scene-sun-y', '--scene-sun-size'].forEach((name, i) => {
-      world.style.setProperty(name, `${values[i]}px`);
-    });
+  function frameScene() {
+    if (!width || !height) return;
+    if (root.dataset.theme !== 'light') {
+      camera.setViewOffset(width, height, -width * (compact ? .12 : .2), 0, width, height);
+      camera.updateProjectionMatrix();
+      return;
+    }
+    // Preserve the 1920 x 1080 fullscreen composition as one cover-scaled
+    // frame. Narrow screens crop around the road instead of resizing objects.
+    const referenceWidth = 1920;
+    const referenceHeight = 1080;
+    const scale = Math.max(width / referenceWidth, height / referenceHeight);
+    const cropWidth = width / scale;
+    const cropHeight = height / scale;
+    const cropX = clamp(referenceWidth * .7 - cropWidth / 2, 0, referenceWidth - cropWidth);
+    const cropY = (referenceHeight - cropHeight) / 2;
+    camera.setViewOffset(referenceWidth, referenceHeight,
+      cropX - referenceWidth * .2, cropY, cropWidth, cropHeight);
+    camera.updateProjectionMatrix();
+    const properties = {
+      '--scene-sun-x': (referenceWidth * .72 - cropX) * scale,
+      '--scene-sun-y': (referenceHeight * .38 - cropY) * scale,
+      '--scene-sun-size': 670 * scale,
+      '--scene-width': referenceWidth * scale,
+      '--scene-height': referenceHeight * scale,
+      '--scene-left': -cropX * scale,
+      '--scene-top': -cropY * scale,
+    };
+    for (const [name, value] of Object.entries(properties)) {
+      world.style.setProperty(name, `${value.toFixed(3)}px`);
+    }
+    world.style.setProperty('--scene-scale', String(scale));
   }
   function draw() {
     if (failed || disposed || contextLost) return;
